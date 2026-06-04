@@ -7,7 +7,6 @@ import RankingTab from './RankingTab';
 import MatchesTab from './MatchesTab';
 import AdminTab from './AdminTab';
 import ScorePopup from './ScorePopup';
-import WelcomePopup from './WelcomePopup';
 import styles from './PorraApp.module.css';
 
 const TABS = [
@@ -90,19 +89,13 @@ export default function PorraApp() {
   }, [store]);
 
   if (!me) {
-    return (
-      <>
-        <WelcomePopup />
-        <Welcome players={players} onEnter={enter} loading={!store} />
-      </>
-    );
+    return <Welcome players={players} onEnter={enter} loading={!store} />;
   }
 
   const meWithLatest = players[me.id] ? { ...me, ...players[me.id], id: me.id } : me;
 
   return (
     <div className={styles.root}>
-      <WelcomePopup />
       <header className={styles.header}>
         <div className={styles.brand}>
           <span className={styles.ball}>⚽</span>
