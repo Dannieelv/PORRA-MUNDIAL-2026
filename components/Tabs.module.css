@@ -67,7 +67,7 @@
   box-shadow: 0 2px 8px rgba(124,97,212,.06);
 }
 .locked { opacity: .7; background: #faf8ff; }
-.team { flex: 1; display: flex; align-items: center; min-width: 0; }
+.team { flex: 1; display: flex; align-items: center; gap: 7px; min-width: 0; }
 .away { justify-content: flex-end; text-align: right; }
 .teamName { font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

@@ -10,7 +10,7 @@ import ScorePopup from './ScorePopup';
 import styles from './PorraApp.module.css';
 
 const TABS = [
-  { id: 'predict', label: 'Mi porra', icon: '📝' },
+  { id: 'predict', label: 'Mi Porrita', icon: '📝' },
   { id: 'ranking', label: 'Ranking',   icon: '🏆' },
   { id: 'matches', label: 'Partidos',  icon: '📅' },
   { id: 'admin',   label: 'Admin',     icon: '⚙️' },

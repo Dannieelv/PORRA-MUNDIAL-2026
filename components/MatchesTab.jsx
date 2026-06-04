@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { MATCHES, GROUPS, TEAMS, flag } from '@/lib/data';
+import { MATCHES, GROUPS, TEAMS } from '@/lib/data';
 import { standings, fmtDate } from '@/lib/scoring';
+import TeamFlag from './TeamFlag';
 import styles from './Tabs.module.css';
 
 export default function MatchesTab({ config }) {
@@ -21,9 +22,9 @@ export default function MatchesTab({ config }) {
             const r = config.results[m.id];
             return (
               <div key={m.id} className={styles.match}>
-                <div className={styles.team}><span className={styles.teamName}>{flag(m.t1)} {m.t1}</span></div>
+                <div className={styles.team}><TeamFlag name={m.t1} size={20} /><span className={styles.teamName}>{m.t1}</span></div>
                 <div className={styles.resPill}>{r && r.h !== '' ? `${r.h}-${r.a}` : '—'}</div>
-                <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2} {flag(m.t2)}</span></div>
+                <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2}</span><TeamFlag name={m.t2} size={20} /></div>
               </div>
             );
           })}
@@ -41,7 +42,7 @@ export default function MatchesTab({ config }) {
                 {st.map((t, i) => (
                   <tr key={t.name} className={i < 2 ? styles[`q${i + 1}`] : ''}>
                     <td>{i + 1}</td>
-                    <td className={styles.tn}>{t.flag} {t.name}</td>
+                    <td className={styles.tn}><TeamFlag name={t.name} size={18} /> {t.name}</td>
                     <td>{t.pj}</td>
                     <td>{t.gf - t.gc > 0 ? '+' : ''}{t.gf - t.gc}</td>
                     <td><strong>{t.pts}</strong></td>

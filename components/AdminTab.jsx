@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { MATCHES, flag } from '@/lib/data';
+import { MATCHES } from '@/lib/data';
+import TeamFlag from './TeamFlag';
 import { ADMIN_PIN } from '@/lib/firebase';
 import { fmtDate } from '@/lib/scoring';
 import styles from './Tabs.module.css';
@@ -78,13 +79,13 @@ export default function AdminTab({ config, onSaveConfig }) {
               const r = results[m.id] || { h: '', a: '' };
               return (
                 <div key={m.id} className={styles.match}>
-                  <div className={styles.team}><span className={styles.teamName}>{flag(m.t1)} {m.t1}</span></div>
+                  <div className={styles.team}><TeamFlag name={m.t1} size={20} /><span className={styles.teamName}>{m.t1}</span></div>
                   <div className={styles.scoreIn}>
                     <input type="number" min="0" inputMode="numeric" value={r.h} onChange={e => setRes(m.id, 'h', e.target.value)} />
                     <span className={styles.vs}>-</span>
                     <input type="number" min="0" inputMode="numeric" value={r.a} onChange={e => setRes(m.id, 'a', e.target.value)} />
                   </div>
-                  <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2} {flag(m.t2)}</span></div>
+                  <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2}</span><TeamFlag name={m.t2} size={20} /></div>
                 </div>
               );
             })}
