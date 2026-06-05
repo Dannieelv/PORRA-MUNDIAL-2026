@@ -116,8 +116,8 @@ export default function BetsTab({ players, me, config, reactions, onReact }) {
                       )}
                       {!locked && !hasPred && <span className={bets.badgePending}>Sin rellenar</span>}
 
-                      {/* Reacción 😂 — solo en partidos CERRADOS con predicción hecha, y solo si es otro jugador */}
-                      {isOther && locked && hasPred && (
+                      {/* Reacción 😂 — en cualquier predicción ya rellenada de otro jugador */}
+                      {isOther && hasPred && (
                         <button
                           className={`${bets.reactBtn} ${myReact ? bets.reactActive : ''}`}
                           onClick={() => onReact(selected, m.id)}
