@@ -29,7 +29,12 @@ export default function PorraApp() {
   const [banner, setBanner]     = useState({ msg: '', kind: '' });
   const [showScore, setShowScore] = useState(false);
   const [reactionNote, setReactionNote] = useState('');
-  const lastSeenRef = useRef(+(localStorage.getItem('porra_reactions_seen') || 0));
+  const lastSeenRef = useRef(0);
+
+  // Inicializar lastSeen desde localStorage (solo en cliente)
+  useEffect(() => {
+    lastSeenRef.current = +(localStorage.getItem('porra_reactions_seen') || 0);
+  }, []);
 
   // Init store
   useEffect(() => {
