@@ -2,7 +2,13 @@ const CACHE = 'porra-2026-v4';
 const ASSETS = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  // NO llamamos skipWaiting aquí — esperamos la señal del cliente
+});
+
+// El cliente nos manda SKIP_WAITING cuando detecta que hay un SW nuevo
+self.addEventListener('message', e => {
+  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 self.addEventListener('activate', e => {
   e.waitUntil(
