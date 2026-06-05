@@ -7,11 +7,13 @@ import RankingTab from './RankingTab';
 import MatchesTab from './MatchesTab';
 import AdminTab from './AdminTab';
 import ScorePopup from './ScorePopup';
+import BetsTab from './BetsTab';
 import styles from './PorraApp.module.css';
 
 const TABS = [
   { id: 'predict', label: 'Mi Porrita', icon: '📝' },
   { id: 'ranking', label: 'Ranking',   icon: '🏆' },
+  { id: 'bets',    label: 'Porras',    icon: '👀' },
   { id: 'matches', label: 'Partidos',  icon: '📅' },
   { id: 'admin',   label: 'Admin',     icon: '⚙️' },
 ];
@@ -112,6 +114,7 @@ export default function PorraApp() {
       <main className={styles.main}>
         {tab === 'predict' && <PredictTab me={meWithLatest} config={config} onSave={savePlayer} />}
         {tab === 'ranking' && <RankingTab players={players} me={me} config={config} />}
+        {tab === 'bets'    && <BetsTab players={players} me={me} config={config} />}
         {tab === 'matches' && <MatchesTab config={config} />}
         {tab === 'admin'   && <AdminTab config={config} onSaveConfig={saveConfig} />}
       </main>
