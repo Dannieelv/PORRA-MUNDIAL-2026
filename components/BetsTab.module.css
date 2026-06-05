@@ -140,6 +140,40 @@
   padding: 2px 7px;
 }
 
+/* ── Reacciones 😂 ───────────────────────────────── */
+.reactBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #fef3c7;
+  border: 1.5px solid #f59e0b;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .12s, transform .1s;
+  margin-left: 2px;
+}
+.reactBtn:hover { background: #fde68a; transform: scale(1.08); }
+.reactActive {
+  background: #7C61D4 !important;
+  border-color: #7C61D4 !important;
+  color: #fff;
+}
+.reactCount {
+  font-weight: 900;
+  font-size: 11px;
+}
+.reactReceived {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7C61D4;
+  background: #ede8ff;
+  border-radius: 8px;
+  padding: 2px 7px;
+}
+
 /* ── Grupos (solo lectura) ───────────────────────── */
 .groupRow {
   display: flex;

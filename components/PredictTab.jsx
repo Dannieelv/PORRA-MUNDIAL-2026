@@ -1,24 +1,18 @@
 'use client';
 import { useState, useCallback } from 'react';
-import {
-  DndContext, closestCenter, PointerSensor, TouchSensor,
-  useSensor, useSensors, DragOverlay,
-} from '@dnd-kit/core';
-import {
-  SortableContext, verticalListSortingStrategy,
-  useSortable, arrayMove,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { MATCHES, GROUPS, flagUrl } from '@/lib/data';
-import { fmtDate, isMatchLocked, matchPoints, defaultPicks } from '@/lib/scoring';
+import { MATCHES, GROUPS, TEAMS } from '@/lib/data';
+import { fmtDate, isMatchLocked, matchPoints, defaultPicks, standings, autoGroupPicks } from '@/lib/scoring';
 import TeamFlag from './TeamFlag';
 import styles from './Tabs.module.css';
-import dnd from './DndGroup.module.css';
+import pred from './PredictTab.module.css';
+
+const ALL_TEAMS = [...TEAMS].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+const SEMIS_COUNT = 4;
 
 export default function PredictTab({ me, config, onSave }) {
   const [phase, setPhase] = useState('scores');
-  const [scores, setScores] = useState({ ...me.scores });
-  const [groupPicks, setGroupPicks] = useState({ ...me.groupPicks });
+  const [scores, setScores]           = useState({ ...me.scores });
+  const [tournament, setTournament]   = useState({ semis: [], ...(me.tournament || {}) });
   const [dirty, setDirty] = useState(false);
 
   const handleScore = (id, side, val) => {
@@ -26,40 +20,51 @@ export default function PredictTab({ me, config, onSave }) {
     setDirty(true);
   };
 
-  const reorderGroup = useCallback((group, oldIndex, newIndex) => {
-    setGroupPicks(prev => {
-      const arr = prev[group] ? [...prev[group]] : defaultPicks(group);
-      return { ...prev, [group]: arrayMove(arr, oldIndex, newIndex) };
+  const setT = (key, val) => {
+    setTournament(prev => ({ ...prev, [key]: val }));
+    setDirty(true);
+  };
+
+  const toggleSemi = (team) => {
+    setTournament(prev => {
+      const semis = prev.semis || [];
+      if (semis.includes(team)) return { ...prev, semis: semis.filter(s => s !== team) };
+      if (semis.length >= SEMIS_COUNT) return prev; // max 4
+      return { ...prev, semis: [...semis, team] };
     });
     setDirty(true);
-  }, []);
+  };
 
   const save = async () => {
-    await onSave({ scores, groupPicks });
+    // Calcular groupPicks automáticamente desde las predicciones
+    const groupPicks = {};
+    GROUPS.forEach(g => {
+      const table = standings(g, scores);
+      groupPicks[g] = table.map(t => t.name);
+    });
+    await onSave({ scores, groupPicks, tournament });
     setDirty(false);
   };
 
   return (
     <div className={styles.tabWrap}>
       <div className={styles.seg}>
-        <button className={phase === 'scores' ? styles.segActive : ''} onClick={() => setPhase('scores')}>
-          Resultados
-        </button>
-        <button className={phase === 'groups' ? styles.segActive : ''} onClick={() => setPhase('groups')}>
-          Clasificación grupos
-        </button>
+        <button className={phase === 'scores'    ? styles.segActive : ''} onClick={() => setPhase('scores')}>⚽ Resultados</button>
+        <button className={phase === 'groups'    ? styles.segActive : ''} onClick={() => setPhase('groups')}>📊 Grupos</button>
+        <button className={phase === 'torneo'    ? styles.segActive : ''} onClick={() => setPhase('torneo')}>🌍 Torneo</button>
       </div>
 
+      {/* ── Resultados ── */}
       {phase === 'scores' && (
         <>
           {[1, 2, 3].map(md => (
             <div key={md}>
               <div className={styles.mdTitle}>Jornada {md}</div>
               {MATCHES.filter(m => m.md === md).map(m => {
-                const pred = scores[m.id] || { h: '', a: '' };
+                const p   = scores[m.id] || { h: '', a: '' };
                 const res = config.results[m.id];
                 const locked = isMatchLocked(m, config.locked);
-                const pts = res ? matchPoints(pred, res, m.mult, config.points) : null;
+                const pts = res ? matchPoints(p, res, m.mult, config.points) : null;
                 return (
                   <div key={m.id}>
                     <div className={`${styles.match} ${locked ? styles.locked : ''}`}>
@@ -69,11 +74,11 @@ export default function PredictTab({ me, config, onSave }) {
                       </div>
                       <div className={styles.scoreIn}>
                         <input type="number" min="0" max="20" inputMode="numeric"
-                          value={pred.h} disabled={locked}
+                          value={p.h} disabled={locked}
                           onChange={e => handleScore(m.id, 'h', e.target.value)} />
                         <span className={styles.vs}>-</span>
                         <input type="number" min="0" max="20" inputMode="numeric"
-                          value={pred.a} disabled={locked}
+                          value={p.a} disabled={locked}
                           onChange={e => handleScore(m.id, 'a', e.target.value)} />
                       </div>
                       <div className={`${styles.team} ${styles.away}`}>
@@ -100,22 +105,86 @@ export default function PredictTab({ me, config, onSave }) {
         </>
       )}
 
+      {/* ── Clasificación de grupos (auto) ── */}
       {phase === 'groups' && (
         <div>
           <p className={styles.hint}>
-            Arrastra para ordenar cada grupo del 1.º al 4.º · +{config.points.clasif} pt por posición exacta
+            Clasificación automática según tus predicciones · 1º={config.points.clasif1 ?? 4}pt · 2º={config.points.clasif2 ?? 3}pt
           </p>
           {GROUPS.map(g => {
-            const picks = groupPicks[g] || defaultPicks(g);
+            const table = standings(g, scores);
+            const hasAny = MATCHES.filter(m => m.group === g).some(m => {
+              const s = scores[m.id];
+              return s && s.h !== '' && s.a !== '';
+            });
             return (
-              <SortableGroup
-                key={g}
-                group={g}
-                picks={picks}
-                onReorder={reorderGroup}
-              />
+              <div key={g} className={styles.card}>
+                <h2 className={styles.cardTitle}>Grupo {g}</h2>
+                {!hasAny && <p className={styles.hint}>Rellena resultados para ver la clasificación</p>}
+                {table.map((t, i) => (
+                  <div key={t.name} className={pred.groupRow}>
+                    <span className={`${pred.groupPos} ${i === 0 ? pred.first : i === 1 ? pred.second : ''}`}>{i + 1}º</span>
+                    <TeamFlag name={t.name} size={22} />
+                    <span className={pred.groupName}>{t.name}</span>
+                    {hasAny && (
+                      <span className={pred.groupStats}>{t.pts}pt · {t.gf}-{t.gc}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ── Torneo ── */}
+      {phase === 'torneo' && (
+        <div>
+          <p className={styles.hint}>Predicciones de la fase final del torneo.</p>
+
+          <div className={styles.card}>
+            <h2 className={styles.cardTitle}>🏆 Ganadores</h2>
+            <TSelect label={`Campeón del Mundial (+${config.points.champion ?? 10}pt)`}
+              value={tournament.champion || ''} onChange={v => setT('champion', v)} />
+            <TSelect label={`Subcampeón (+${config.points.runnerUp ?? 6}pt)`}
+              value={tournament.runnerUp || ''} onChange={v => setT('runnerUp', v)} />
+            <TSelect label={`Equipo revelación (+${config.points.revelation ?? 3}pt)`}
+              value={tournament.revelation || ''} onChange={v => setT('revelation', v)} />
+          </div>
+
+          <div className={styles.card}>
+            <h2 className={styles.cardTitle}>🥈 Semifinalistas (+{config.points.semi ?? 3}pt c/u)</h2>
+            <p className={styles.hint}>Selecciona los 4 equipos que llegarán a semis.</p>
+            <div className={pred.semiGrid}>
+              {ALL_TEAMS.map(t => {
+                const selected = (tournament.semis || []).includes(t.name);
+                const full = (tournament.semis || []).length >= SEMIS_COUNT;
+                return (
+                  <button key={t.name}
+                    className={`${pred.semiBtn} ${selected ? pred.semiSelected : ''} ${!selected && full ? pred.semiDisabled : ''}`}
+                    onClick={() => toggleSemi(t.name)}
+                    disabled={!selected && full}>
+                    <TeamFlag name={t.name} size={16} />
+                    <span>{t.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className={pred.semiCount}>{(tournament.semis || []).length} / {SEMIS_COUNT} seleccionados</p>
+          </div>
+
+          <div className={styles.card}>
+            <h2 className={styles.cardTitle}>🌟 Premios individuales</h2>
+            <TText label={`Bota de Oro (+${config.points.goldenBoot ?? 5}pt)`}
+              value={tournament.goldenBoot || ''} onChange={v => setT('goldenBoot', v)}
+              placeholder="Nombre del jugador" />
+            <TText label={`Guante de Oro (+${config.points.goldenGlove ?? 5}pt)`}
+              value={tournament.goldenGlove || ''} onChange={v => setT('goldenGlove', v)}
+              placeholder="Nombre del portero" />
+            <TText label={`MVP del torneo (+${config.points.mvp ?? 5}pt)`}
+              value={tournament.mvp || ''} onChange={v => setT('mvp', v)}
+              placeholder="Nombre del jugador" />
+          </div>
         </div>
       )}
 
@@ -129,69 +198,26 @@ export default function PredictTab({ me, config, onSave }) {
   );
 }
 
-// ---- Sortable group ----
-function SortableGroup({ group, picks, onReorder }) {
-  const [activeId, setActiveId] = useState(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor,   { activationConstraint: { delay: 150, tolerance: 5 } }),
-  );
-
-  const handleDragEnd = ({ active, over }) => {
-    setActiveId(null);
-    if (!over || active.id === over.id) return;
-    const oldIndex = picks.indexOf(active.id);
-    const newIndex = picks.indexOf(over.id);
-    onReorder(group, oldIndex, newIndex);
-  };
-
-  const activeName = activeId;
-
+function TSelect({ label, value, onChange }) {
   return (
-    <div className={styles.card}>
-      <h2 className={styles.cardTitle}>Grupo {group}</h2>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={({ active }) => setActiveId(active.id)}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={picks} strategy={verticalListSortingStrategy}>
-          {picks.map((name, i) => (
-            <SortableTeamRow key={name} id={name} pos={i + 1} name={name} />
-          ))}
-        </SortableContext>
-        <DragOverlay>
-          {activeName && (
-            <div className={`${dnd.row} ${dnd.dragging}`}>
-              <span className={dnd.pos}>{picks.indexOf(activeName) + 1}º</span>
-              <TeamFlag name={activeName} size={22} />
-              <span className={dnd.name}>{activeName}</span>
-              <span className={dnd.handle}>⠿</span>
-            </div>
-          )}
-        </DragOverlay>
-      </DndContext>
+    <div className={styles.field}>
+      <label>{label}</label>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        style={{ fontFamily: 'inherit', fontSize: 15, padding: '10px 12px', border: '2px solid #e7e1f4', borderRadius: 12, width: '100%', background: '#fff', color: '#2F281D' }}>
+        <option value="">— Sin seleccionar —</option>
+        {ALL_TEAMS.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+      </select>
     </div>
   );
 }
 
-function SortableTeamRow({ id, pos, name }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.35 : 1,
-  };
-
+function TText({ label, value, onChange, placeholder }) {
   return (
-    <div ref={setNodeRef} style={style} className={dnd.row}>
-      <span className={dnd.pos}>{pos}º</span>
-      <TeamFlag name={name} size={22} />
-      <span className={dnd.name}>{name}</span>
-      <span className={dnd.handle} {...attributes} {...listeners} title="Arrastra para reordenar">⠿</span>
+    <div className={styles.field}>
+      <label>{label}</label>
+      <input type="text" value={value} placeholder={placeholder}
+        onChange={e => onChange(e.target.value)}
+        style={{ fontFamily: 'inherit', fontSize: 15, padding: '10px 12px', border: '2px solid #e7e1f4', borderRadius: 12, width: '100%', background: '#fff', color: '#2F281D' }} />
     </div>
   );
 }

@@ -42,7 +42,17 @@
   transition: background .15s;
 }
 .close:hover { background: rgba(255,255,255,.35); }
-.body { padding: 0; }
+.body { padding: 0; max-height: 65vh; overflow-y: auto; }
+.section {
+  padding: 8px 20px 4px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #7C61D4;
+  background: #f6f2ff;
+  border-bottom: 1px solid #e7e1f4;
+}
 .row {
   display: flex;
   align-items: center;

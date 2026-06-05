@@ -53,9 +53,10 @@
   font-weight: 700;
   color: #fff;
 }
-.warn { background: #D97706; }
-.ok   { background: #16A34A; }
-.err  { background: #DC2626; }
+.warn     { background: #D97706; }
+.ok       { background: #16A34A; }
+.err      { background: #DC2626; }
+.reaction { background: #7C61D4; }
 
 /* Main */
 .main { flex: 1; padding-bottom: 84px; background: linear-gradient(160deg, #F4F1FB 0%, #fdf3ec 100%); }

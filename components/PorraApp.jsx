@@ -1,13 +1,14 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import { slugify } from '@/lib/scoring';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { slugify, autoGroupPicks } from '@/lib/scoring';
 import { createStore, normalizeConfig } from '@/lib/store';
+import { GROUPS, MATCHES } from '@/lib/data';
 import PredictTab from './PredictTab';
 import RankingTab from './RankingTab';
 import MatchesTab from './MatchesTab';
 import AdminTab from './AdminTab';
-import ScorePopup from './ScorePopup';
 import BetsTab from './BetsTab';
+import ScorePopup from './ScorePopup';
 import styles from './PorraApp.module.css';
 
 const TABS = [
@@ -19,13 +20,16 @@ const TABS = [
 ];
 
 export default function PorraApp() {
-  const [store, setStore] = useState(null);
-  const [config, setConfig] = useState(normalizeConfig());
-  const [players, setPlayers] = useState({});
-  const [me, setMe] = useState(null);
-  const [tab, setTab] = useState('predict');
-  const [banner, setBanner] = useState({ msg: '', kind: '' });
+  const [store, setStore]       = useState(null);
+  const [config, setConfig]     = useState(normalizeConfig());
+  const [players, setPlayers]   = useState({});
+  const [reactions, setReactions] = useState({});
+  const [me, setMe]             = useState(null);
+  const [tab, setTab]           = useState('predict');
+  const [banner, setBanner]     = useState({ msg: '', kind: '' });
   const [showScore, setShowScore] = useState(false);
+  const [reactionNote, setReactionNote] = useState('');
+  const lastSeenRef = useRef(+(localStorage.getItem('porra_reactions_seen') || 0));
 
   // Init store
   useEffect(() => {
@@ -38,22 +42,42 @@ export default function PorraApp() {
         setBanner({ msg: '☁️ Conectado · datos en tiempo real', kind: 'ok' });
         setTimeout(() => setBanner({ msg: '', kind: '' }), 3000);
       }
-      const unsub = s.subscribe(({ config: c, players: p }) => {
+      const unsub = s.subscribe(({ config: c, players: p, reactions: r }) => {
         setConfig(normalizeConfig(c));
         setPlayers(p);
+        setReactions(r || {});
       });
       return unsub;
     });
   }, []);
+
+  // Detectar nuevas reacciones dirigidas a mí
+  useEffect(() => {
+    const meId = localStorage.getItem('porra_me');
+    if (!meId || !reactions) return;
+    const myReactions = Object.values(reactions).filter(r => r.to === meId);
+    const newest = myReactions.reduce((max, r) => Math.max(max, r.at || 0), 0);
+    if (newest > lastSeenRef.current && myReactions.length > 0) {
+      const last = myReactions.sort((a, b) => (b.at || 0) - (a.at || 0))[0];
+      const matchLabel = last.matchId
+        ? (() => {
+            const m = MATCHES.find(x => x.id === last.matchId);
+            return m ? `${m.t1} vs ${m.t2}` : 'tu predicción';
+          })()
+        : 'tu predicción';
+      setReactionNote(`😂 ${last.fromName} se ha reído de tu pronóstico: ${matchLabel}`);
+      setTimeout(() => setReactionNote(''), 5000);
+      lastSeenRef.current = newest;
+      localStorage.setItem('porra_reactions_seen', String(newest));
+    }
+  }, [reactions]);
 
   // Restore me from localStorage
   useEffect(() => {
     const savedId = localStorage.getItem('porra_me');
     if (savedId) {
       setPlayers(prev => {
-        if (prev[savedId]) {
-          setMe({ id: savedId, ...prev[savedId] });
-        }
+        if (prev[savedId]) setMe({ id: savedId, ...prev[savedId] });
         return prev;
       });
     }
@@ -65,23 +89,22 @@ export default function PorraApp() {
     const existing = players[id];
     if (existing) {
       if (existing.pin && existing.pin !== pin) return 'PIN incorrecto para ese nombre';
-      const player = { id, ...existing };
-      setMe(player);
+      setMe({ id, ...existing });
       localStorage.setItem('porra_me', id);
     } else {
-      const player = { id, name, pin, scores: {}, groupPicks: {} };
+      const player = { id, name, pin, scores: {}, groupPicks: {}, tournament: {} };
       setMe(player);
-      store.savePlayer(id, { name, pin, scores: {}, groupPicks: {} });
+      store.savePlayer(id, { name, pin, scores: {}, groupPicks: {}, tournament: {} });
       localStorage.setItem('porra_me', id);
     }
     return null;
   }, [store, players]);
 
-  const savePlayer = useCallback(async ({ scores, groupPicks }) => {
+  const savePlayer = useCallback(async ({ scores, groupPicks, tournament }) => {
     if (!me || !store) return;
-    const updated = { ...me, scores, groupPicks };
+    const updated = { ...me, scores, groupPicks, tournament };
     setMe(updated);
-    await store.savePlayer(me.id, { name: me.name, pin: me.pin || '', scores, groupPicks });
+    await store.savePlayer(me.id, { name: me.name, pin: me.pin || '', scores, groupPicks, tournament: tournament || {} });
   }, [me, store]);
 
   const saveConfig = useCallback(async (newConfig) => {
@@ -90,11 +113,36 @@ export default function PorraApp() {
     setConfig(normalizeConfig(newConfig));
   }, [store]);
 
+  const handleReact = useCallback(async (toPlayerId, matchId) => {
+    if (!store || !me) return;
+    const reactionId = `${me.id}_${matchId}_${toPlayerId}`;
+    const existing = reactions[reactionId];
+    if (existing) {
+      await store.saveReaction(reactionId, null); // toggle off
+    } else {
+      await store.saveReaction(reactionId, {
+        from: me.id,
+        fromName: me.name,
+        to: toPlayerId,
+        matchId,
+        emoji: '😂',
+        at: Date.now(),
+      });
+    }
+  }, [store, me, reactions]);
+
   if (!me) {
     return <Welcome players={players} onEnter={enter} loading={!store} />;
   }
 
-  const meWithLatest = players[me.id] ? { ...me, ...players[me.id], id: me.id } : me;
+  const meWithLatest = players[me.id]
+    ? { ...me, ...players[me.id], id: me.id }
+    : me;
+
+  // Badge en tab Porras si hay nuevas reacciones a mí
+  const myNewReactions = Object.values(reactions).filter(
+    r => r.to === me.id && (r.at || 0) > lastSeenRef.current
+  ).length;
 
   return (
     <div className={styles.root}>
@@ -110,19 +158,34 @@ export default function PorraApp() {
       </header>
 
       {banner.msg && <div className={`${styles.banner} ${styles[banner.kind]}`}>{banner.msg}</div>}
+      {reactionNote && <div className={`${styles.banner} ${styles.reaction}`}>{reactionNote}</div>}
 
       <main className={styles.main}>
         {tab === 'predict' && <PredictTab me={meWithLatest} config={config} onSave={savePlayer} />}
         {tab === 'ranking' && <RankingTab players={players} me={me} config={config} />}
-        {tab === 'bets'    && <BetsTab players={players} me={me} config={config} />}
+        {tab === 'bets'    && <BetsTab players={players} me={me} config={config} reactions={reactions} onReact={handleReact} />}
         {tab === 'matches' && <MatchesTab config={config} />}
         {tab === 'admin'   && <AdminTab config={config} onSaveConfig={saveConfig} />}
       </main>
 
       <nav className={styles.tabbar}>
         {TABS.map(t => (
-          <button key={t.id} className={`${styles.tabBtn} ${tab === t.id ? styles.tabActive : ''}`} onClick={() => setTab(t.id)}>
-            <span>{t.icon}</span>{t.label}
+          <button key={t.id}
+            className={`${styles.tabBtn} ${tab === t.id ? styles.tabActive : ''}`}
+            onClick={() => setTab(t.id)}>
+            <span style={{ position: 'relative' }}>
+              {t.icon}
+              {t.id === 'bets' && myNewReactions > 0 && (
+                <span style={{
+                  position: 'absolute', top: -4, right: -6,
+                  background: '#EF4444', color: '#fff',
+                  fontSize: 9, fontWeight: 900,
+                  borderRadius: '50%', width: 14, height: 14,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>{myNewReactions}</span>
+              )}
+            </span>
+            {t.label}
           </button>
         ))}
       </nav>
@@ -134,7 +197,7 @@ export default function PorraApp() {
 
 function Welcome({ players, onEnter, loading }) {
   const [name, setName] = useState('');
-  const [pin, setPin] = useState('');
+  const [pin, setPin]   = useState('');
   const [error, setError] = useState('');
   const names = Object.values(players).map(p => p.name);
 
@@ -177,16 +240,6 @@ function Welcome({ players, onEnter, loading }) {
           </p>
         )}
       </div>
-    </div>
-  );
-}
-
-// Field helper
-function Field({ id, label, children }) {
-  return (
-    <div className={styles.field}>
-      {label && <label htmlFor={id}>{label}</label>}
-      {children}
     </div>
   );
 }

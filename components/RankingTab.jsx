@@ -4,9 +4,10 @@ import { playerScore } from '@/lib/scoring';
 import styles from './Tabs.module.css';
 
 const MODES = [
-  { key: 'total', label: 'Total' },
-  { key: 'match', label: 'Partidos' },
-  { key: 'clasif', label: 'Grupos' },
+  { key: 'total',      label: 'Total'    },
+  { key: 'match',      label: 'Partidos' },
+  { key: 'clasif',     label: 'Grupos'   },
+  { key: 'tournament', label: '🌍 Torneo' },
 ];
 
 export default function RankingTab({ players, me, config }) {

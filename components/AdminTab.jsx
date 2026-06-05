@@ -1,20 +1,24 @@
 'use client';
 import { useState } from 'react';
-import { MATCHES } from '@/lib/data';
+import { MATCHES, TEAMS } from '@/lib/data';
 import TeamFlag from './TeamFlag';
 import { ADMIN_PIN } from '@/lib/firebase';
 import { fmtDate } from '@/lib/scoring';
 import styles from './Tabs.module.css';
 
+const ALL_TEAMS = [...TEAMS].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
 export default function AdminTab({ config, onSaveConfig }) {
   const [unlocked, setUnlocked] = useState(false);
-  const [pin, setPin] = useState('');
-  const [points, setPoints] = useState({ ...config.points });
-  const [locked, setLocked] = useState(config.locked);
-  const [results, setResults] = useState({ ...config.results });
-  const [toast, setToast] = useState('');
+  const [pin,      setPin]      = useState('');
+  const [points,   setPoints]   = useState({ ...config.points });
+  const [locked,   setLocked]   = useState(config.locked);
+  const [results,  setResults]  = useState({ ...config.results });
+  const [trn,      setTrn]      = useState({ semis: [], ...(config.tournament || {}) });
+  const [toast,    setToast]    = useState('');
+  const [section,  setSection]  = useState('results');
 
-  const showToast = (msg, ok = true) => { setToast(msg); setTimeout(() => setToast(''), 2200); };
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2200); };
 
   if (!unlocked) {
     return (
@@ -27,7 +31,7 @@ export default function AdminTab({ config, onSaveConfig }) {
               onChange={e => setPin(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && pin === ADMIN_PIN) setUnlocked(true); }} />
           </div>
-          <button className={styles.btn} onClick={() => { if (pin === ADMIN_PIN) setUnlocked(true); else showToast('PIN incorrecto', false); }}>
+          <button className={styles.btn} onClick={() => { if (pin === ADMIN_PIN) setUnlocked(true); else showToast('PIN incorrecto'); }}>
             Entrar
           </button>
           {toast && <div className={`${styles.toast} ${styles.toastErr}`}>{toast}</div>}
@@ -36,64 +40,176 @@ export default function AdminTab({ config, onSaveConfig }) {
     );
   }
 
-  const saveCfg = async () => {
-    await onSaveConfig({ ...config, points, locked });
-    showToast('Ajustes guardados ✓');
-  };
-  const saveRes = async () => {
+  const saveAll = async () => {
     const clean = {};
     Object.entries(results).forEach(([id, r]) => { if (r.h !== '' || r.a !== '') clean[id] = r; });
-    await onSaveConfig({ ...config, points, locked, results: clean });
-    showToast('Resultados guardados ✓');
+    await onSaveConfig({ ...config, points, locked, results: clean, tournament: trn });
+    showToast('Guardado ✓');
   };
-  const setRes = (id, side, val) => setResults(prev => ({ ...prev, [id]: { ...(prev[id] || { h: '', a: '' }), [side]: val } }));
+
+  const setRes = (id, side, val) =>
+    setResults(prev => ({ ...prev, [id]: { ...(prev[id] || { h: '', a: '' }), [side]: val } }));
+
+  const setT = (key, val) => setTrn(prev => ({ ...prev, [key]: val }));
+  const toggleSemiResult = (team) => {
+    setTrn(prev => {
+      const s = prev.semis || [];
+      return { ...prev, semis: s.includes(team) ? s.filter(x => x !== team) : [...s, team] };
+    });
+  };
 
   return (
     <div className={styles.tabWrap}>
       {toast && <div className={`${styles.toast} ${styles.toastOk}`}>{toast}</div>}
 
-      <div className={styles.card}>
-        <h2 className={styles.cardTitle}>Puntuación</h2>
-        <div className={styles.row2}>
-          {[['sign','Signo 1X2'],['diff','Dif. goles'],['exact','Exacto'],['clasif','Pos. grupo']].map(([k, label]) => (
-            <div key={k} className={styles.field}>
-              <label>{label}</label>
-              <input type="number" value={points[k]} onChange={e => setPoints(p => ({ ...p, [k]: +e.target.value }))} />
-            </div>
-          ))}
-        </div>
-        <label className={styles.checkRow}>
-          <input type="checkbox" checked={locked} onChange={e => setLocked(e.target.checked)} />
-          Cerrar TODAS las predicciones
-        </label>
-        <button className={styles.btn} onClick={saveCfg}>Guardar ajustes</button>
+      <div className={styles.seg}>
+        <button className={section === 'results' ? styles.segActive : ''} onClick={() => setSection('results')}>Resultados</button>
+        <button className={section === 'torneo'  ? styles.segActive : ''} onClick={() => setSection('torneo')}>🌍 Torneo</button>
+        <button className={section === 'config'  ? styles.segActive : ''} onClick={() => setSection('config')}>Ajustes</button>
       </div>
 
-      <div className={styles.card}>
-        <h2 className={styles.cardTitle}>Resultados reales</h2>
-        <p className={styles.hint}>Introduce el marcador final de cada partido.</p>
-        {[1, 2, 3].map(md => (
-          <div key={md}>
-            <div className={styles.mdTitle}>Jornada {md}</div>
-            {MATCHES.filter(m => m.md === md).map(m => {
-              const r = results[m.id] || { h: '', a: '' };
-              return (
-                <div key={m.id} className={styles.match}>
-                  <div className={styles.team}><TeamFlag name={m.t1} size={20} /><span className={styles.teamName}>{m.t1}</span></div>
-                  <div className={styles.scoreIn}>
-                    <input type="number" min="0" inputMode="numeric" value={r.h} onChange={e => setRes(m.id, 'h', e.target.value)} />
-                    <span className={styles.vs}>-</span>
-                    <input type="number" min="0" inputMode="numeric" value={r.a} onChange={e => setRes(m.id, 'a', e.target.value)} />
+      {/* ── Resultados partidos ── */}
+      {section === 'results' && (
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Resultados reales</h2>
+          <p className={styles.hint}>Introduce el marcador final de cada partido.</p>
+          {[1, 2, 3].map(md => (
+            <div key={md}>
+              <div className={styles.mdTitle}>Jornada {md}</div>
+              {MATCHES.filter(m => m.md === md).map(m => {
+                const r = results[m.id] || { h: '', a: '' };
+                return (
+                  <div key={m.id} className={styles.match}>
+                    <div className={styles.team}><TeamFlag name={m.t1} size={20} /><span className={styles.teamName}>{m.t1}</span></div>
+                    <div className={styles.scoreIn}>
+                      <input type="number" min="0" inputMode="numeric" value={r.h} onChange={e => setRes(m.id, 'h', e.target.value)} />
+                      <span className={styles.vs}>-</span>
+                      <input type="number" min="0" inputMode="numeric" value={r.a} onChange={e => setRes(m.id, 'a', e.target.value)} />
+                    </div>
+                    <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2}</span><TeamFlag name={m.t2} size={20} /></div>
                   </div>
-                  <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2}</span><TeamFlag name={m.t2} size={20} /></div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          ))}
+          <button className={styles.btn} style={{ marginTop: 14 }} onClick={saveAll}>Guardar resultados</button>
+        </div>
+      )}
+
+      {/* ── Torneo ── */}
+      {section === 'torneo' && (
+        <>
+          <div className={styles.card}>
+            <h2 className={styles.cardTitle}>🏆 Ganadores reales</h2>
+            <TSelect label="Campeón del Mundial" value={trn.champion || ''} onChange={v => setT('champion', v)} />
+            <TSelect label="Subcampeón" value={trn.runnerUp || ''} onChange={v => setT('runnerUp', v)} />
+            <TSelect label="Equipo revelación" value={trn.revelation || ''} onChange={v => setT('revelation', v)} />
           </div>
-        ))}
-        <button className={styles.btn} style={{ marginTop: 14 }} onClick={saveRes}>Guardar resultados</button>
-      </div>
+
+          <div className={styles.card}>
+            <h2 className={styles.cardTitle}>🥈 Semifinalistas reales</h2>
+            <p className={styles.hint}>Selecciona los 4 equipos que llegaron a semis.</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {ALL_TEAMS.map(t => {
+                const sel = (trn.semis || []).includes(t.name);
+                return (
+                  <button key={t.name}
+                    onClick={() => toggleSemiResult(t.name)}
+                    style={{
+                      padding: '5px 10px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+                      fontFamily: 'inherit', cursor: 'pointer',
+                      background: sel ? '#7C61D4' : '#f4f1fb',
+                      color: sel ? '#fff' : '#2d2540',
+                      border: `2px solid ${sel ? '#7C61D4' : '#e7e1f4'}`,
+                    }}>
+                    {t.name}
+                  </button>
+                );
+              })}
+            </div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#7C61D4' }}>{(trn.semis || []).length} / 4 seleccionados</p>
+          </div>
+
+          <div className={styles.card}>
+            <h2 className={styles.cardTitle}>🌟 Premios individuales reales</h2>
+            <TText label="Bota de Oro" value={trn.goldenBoot || ''} onChange={v => setT('goldenBoot', v)} placeholder="Nombre del jugador" />
+            <TText label="Guante de Oro" value={trn.goldenGlove || ''} onChange={v => setT('goldenGlove', v)} placeholder="Nombre del portero" />
+            <TText label="MVP del torneo" value={trn.mvp || ''} onChange={v => setT('mvp', v)} placeholder="Nombre del jugador" />
+          </div>
+
+          <button className={styles.btn} onClick={saveAll}>Guardar torneo</button>
+        </>
+      )}
+
+      {/* ── Ajustes de puntuación y bloqueo ── */}
+      {section === 'config' && (
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Puntuación grupos</h2>
+          <div className={styles.row2}>
+            {[
+              ['sign',      'Signo 1X2'],
+              ['exact',     'Marcador exacto'],
+              ['diff',      'Diferencia goles'],
+              ['total',     'Total goles'],
+              ['bothScore', 'Ambos marcan'],
+              ['clasif1',   '1º de grupo'],
+              ['clasif2',   '2º de grupo'],
+            ].map(([k, label]) => (
+              <div key={k} className={styles.field}>
+                <label>{label}</label>
+                <input type="number" value={points[k] ?? ''} onChange={e => setPoints(p => ({ ...p, [k]: +e.target.value }))} />
+              </div>
+            ))}
+          </div>
+          <h2 className={styles.cardTitle} style={{ marginTop: 12 }}>Puntuación torneo</h2>
+          <div className={styles.row2}>
+            {[
+              ['champion',   'Campeón'],
+              ['runnerUp',   'Subcampeón'],
+              ['semi',       'Semifinalista'],
+              ['goldenBoot', 'Bota de Oro'],
+              ['goldenGlove','Guante de Oro'],
+              ['mvp',        'MVP'],
+              ['revelation', 'Revelación'],
+            ].map(([k, label]) => (
+              <div key={k} className={styles.field}>
+                <label>{label}</label>
+                <input type="number" value={points[k] ?? ''} onChange={e => setPoints(p => ({ ...p, [k]: +e.target.value }))} />
+              </div>
+            ))}
+          </div>
+          <label className={styles.checkRow}>
+            <input type="checkbox" checked={locked} onChange={e => setLocked(e.target.checked)} />
+            Cerrar TODAS las predicciones
+          </label>
+          <button className={styles.btn} onClick={saveAll}>Guardar ajustes</button>
+        </div>
+      )}
+
       <div style={{ height: 40 }} />
+    </div>
+  );
+}
+
+function TSelect({ label, value, onChange }) {
+  return (
+    <div className={styles.field}>
+      <label>{label}</label>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        style={{ fontFamily: 'inherit', fontSize: 15, padding: '10px 12px', border: '2px solid #e7e1f4', borderRadius: 12, width: '100%', background: '#fff', color: '#2F281D' }}>
+        <option value="">— Sin resultado aún —</option>
+        {ALL_TEAMS.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function TText({ label, value, onChange, placeholder }) {
+  return (
+    <div className={styles.field}>
+      <label>{label}</label>
+      <input type="text" value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)}
+        style={{ fontFamily: 'inherit', fontSize: 15, padding: '10px 12px', border: '2px solid #e7e1f4', borderRadius: 12, width: '100%', background: '#fff', color: '#2F281D' }} />
     </div>
   );
 }

@@ -4,15 +4,13 @@ import styles from './ScorePopup.module.css';
 
 export default function ScorePopup({ points, onClose }) {
   const cardRef = useRef(null);
-  const total = points.sign + points.diff + points.exact;
+  const P = points;
 
   useEffect(() => {
-    const handler = (e) => {
-      if (cardRef.current && !cardRef.current.contains(e.target)) onClose();
-    };
+    const handler = (e) => { if (cardRef.current && !cardRef.current.contains(e.target)) onClose(); };
+    const onKey   = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('mousedown', handler);
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('keydown',   onKey);
     return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('keydown', onKey); };
   }, [onClose]);
 
@@ -24,28 +22,41 @@ export default function ScorePopup({ points, onClose }) {
           <button className={styles.close} onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
         <div className={styles.body}>
-          <Row label="Signo 1X2 correcto" val={`+${points.sign} pt`} />
-          <Row label="Diferencia de goles" sub="requiere 1X2 ✓" val={`+${points.diff} pt`} />
-          <Row label="Resultado exacto" sub="requiere 1X2 ✓" val={`+${points.exact} pt`} />
-          <Row label="Posición en clasificación de grupo" val={`+${points.clasif} pt`} />
-          <Row label="Partido con multiplicador" val="× puntos" muted />
+
+          <div className={styles.section}>⚽ Fase de grupos</div>
+          <Row label="Signo acertado (1X2)"          val={P.sign}      />
+          <Row label="Bonus marcador exacto"          val={P.exact}     />
+          <Row label="Bonus diferencia de goles"      val={P.diff}      />
+          <Row label="Bonus total de goles"           val={P.total}     />
+          <Row label="Bonus ambos equipos marcan"     val={P.bothScore} />
+
+          <div className={styles.section}>📊 Clasificación de grupo</div>
+          <Row label="1º de grupo acertado"           val={P.clasif1}   />
+          <Row label="2º de grupo acertado"           val={P.clasif2}   />
+
+          <div className={styles.section}>🌍 Fase final</div>
+          <Row label="Campeón del Mundial"            val={P.champion}   />
+          <Row label="Subcampeón"                     val={P.runnerUp}   />
+          <Row label="Cada semifinalista"             val={P.semi}       />
+          <Row label="Bota de Oro"                    val={P.goldenBoot} />
+          <Row label="Guante de Oro"                  val={P.goldenGlove}/>
+          <Row label="MVP del torneo"                 val={P.mvp}        />
+          <Row label="Equipo revelación"              val={P.revelation} />
+
         </div>
         <div className={styles.footer}>
-          Resultado exacto = <strong>{total} pt</strong> en total
+          Marcador exacto en grupos = <strong>{(P.sign ?? 0) + (P.diff ?? 0) + (P.exact ?? 0)} pt</strong> base
         </div>
       </div>
     </div>
   );
 }
 
-function Row({ label, sub, val, muted }) {
+function Row({ label, val }) {
   return (
     <div className={styles.row}>
-      <div className={styles.rowLabel}>
-        {label}
-        {sub && <small>{sub}</small>}
-      </div>
-      <div className={`${styles.rowVal} ${muted ? styles.muted : ''}`}>{val}</div>
+      <div className={styles.rowLabel}>{label}</div>
+      <div className={styles.rowVal}>+{val} pt</div>
     </div>
   );
 }

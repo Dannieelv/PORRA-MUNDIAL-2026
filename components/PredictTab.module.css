@@ -1,0 +1,82 @@
+/* ── Clasificación automática ── */
+.groupRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px;
+  border-bottom: 1px solid #f0ecfa;
+}
+.groupRow:last-child { border-bottom: none; }
+
+.groupPos {
+  font-size: 14px;
+  font-weight: 900;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+  color: #7a7266;
+}
+.first  { color: #E0A800; }
+.second { color: #7C61D4; }
+
+.groupName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2d2540;
+  flex: 1;
+}
+
+.groupStats {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a7266;
+  background: #f4f1fb;
+  padding: 3px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Semifinalistas ── */
+.semiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.semiBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #faf8ff;
+  border: 2px solid #e7e1f4;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2d2540;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+  text-align: left;
+}
+.semiBtn:hover { border-color: #7C61D4; background: #efe9fc; }
+
+.semiSelected {
+  background: #7C61D4 !important;
+  border-color: #7C61D4 !important;
+  color: #fff !important;
+}
+
+.semiDisabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.semiCount {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7C61D4;
+  text-align: right;
+  margin-top: 4px;
+}
