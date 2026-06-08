@@ -199,8 +199,10 @@ export default function PorraApp() {
           <h1>Porra Mundial <span>2026</span></h1>
         </div>
         <div className={styles.who}>
-          <span className={styles.whoName}>👤 {me.name}</span>
-          <button className={styles.infoBtn} onClick={() => setShowScore(true)} title="Ver puntuación" aria-label="Ver reglas de puntuación">📊</button>
+          <span className={styles.whoName}>{me.name}</span>
+          <button className={styles.infoBtn} onClick={() => setShowScore(true)} title="Ver puntuación" aria-label="Ver reglas de puntuación">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="7" width="3" height="8" fill="currentColor"/><rect x="6" y="4" width="3" height="11" fill="currentColor"/><rect x="11" y="1" width="3" height="14" fill="currentColor"/></svg>
+          </button>
         </div>
       </header>
 
@@ -283,7 +285,7 @@ function Welcome({ players, onEnter, loading }) {
           </div>
           {error && <p className={styles.errMsg}>{error}</p>}
           <button className={styles.enterBtn} onClick={submit} disabled={loading}>
-            {loading ? 'Cargando…' : 'Entrar ⚽'}
+            {loading ? 'Cargando…' : 'Entrar'}
           </button>
         </div>
 

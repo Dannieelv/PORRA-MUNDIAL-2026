@@ -13,12 +13,12 @@ export default function Countdown({ match }) {
   }, [match.date]);
 
   if (cd.expired) return (
-    <span className={styles.expired}>⛔ CERRADO</span>
+    <span className={styles.expired}>CERRADO</span>
   );
 
   return (
     <span className={`${styles.cd} ${cd.urgent ? styles.urgent : ''} ${cd.veryUrgent ? styles.veryUrgent : ''}`}>
-      ⏱ {cd.text}
+      {cd.text}
     </span>
   );
 }

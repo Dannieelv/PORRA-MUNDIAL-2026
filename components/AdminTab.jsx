@@ -24,7 +24,7 @@ export default function AdminTab({ config, onSaveConfig }) {
     return (
       <div className={styles.tabWrap}>
         <div className={styles.card}>
-          <h2 className={styles.cardTitle}>⚙️ Administración</h2>
+          <h2 className={styles.cardTitle}>Administración</h2>
           <p className={styles.hint}>Introduce el PIN de administrador para gestionar resultados y configuración.</p>
           <div className={styles.field}>
             <input type="password" inputMode="numeric" placeholder="PIN admin" value={pin}

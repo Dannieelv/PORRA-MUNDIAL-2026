@@ -50,9 +50,9 @@ export default function PredictTab({ me, config, onSave }) {
   return (
     <div className={styles.tabWrap}>
       <div className={styles.seg}>
-        <button className={phase === 'scores'    ? styles.segActive : ''} onClick={() => setPhase('scores')}>⚽ Resultados</button>
-        <button className={phase === 'groups'    ? styles.segActive : ''} onClick={() => setPhase('groups')}>📊 Grupos</button>
-        <button className={phase === 'torneo'    ? styles.segActive : ''} onClick={() => setPhase('torneo')}>🌍 Torneo</button>
+        <button className={phase === 'scores'    ? styles.segActive : ''} onClick={() => setPhase('scores')}>Resultados</button>
+        <button className={phase === 'groups'    ? styles.segActive : ''} onClick={() => setPhase('groups')}>Grupos</button>
+        <button className={phase === 'torneo'    ? styles.segActive : ''} onClick={() => setPhase('torneo')}>Torneo</button>
       </div>
 
       {/* ── Resultados ── */}

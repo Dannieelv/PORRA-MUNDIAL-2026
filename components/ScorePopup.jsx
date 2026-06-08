@@ -18,23 +18,23 @@ export default function ScorePopup({ points, onClose }) {
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Reglas de puntuación">
       <div className={styles.card} ref={cardRef}>
         <div className={styles.head}>
-          <span>📊 Puntuación</span>
+          <span>Puntuación</span>
           <button className={styles.close} onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
         <div className={styles.body}>
 
-          <div className={styles.section}>⚽ Fase de grupos</div>
+          <div className={styles.section}>Fase de grupos</div>
           <Row label="Signo acertado (1X2)"          val={P.sign}      />
           <Row label="Bonus marcador exacto"          val={P.exact}     />
           <Row label="Bonus diferencia de goles"      val={P.diff}      />
           <Row label="Bonus total de goles"           val={P.total}     />
           <Row label="Bonus ambos equipos marcan"     val={P.bothScore} />
 
-          <div className={styles.section}>📊 Clasificación de grupo</div>
+          <div className={styles.section}>Clasificación de grupo</div>
           <Row label="1º de grupo acertado"           val={P.clasif1}   />
           <Row label="2º de grupo acertado"           val={P.clasif2}   />
 
-          <div className={styles.section}>🌍 Fase final</div>
+          <div className={styles.section}>Fase final</div>
           <Row label="Campeón del Mundial"            val={P.champion}   />
           <Row label="Subcampeón"                     val={P.runnerUp}   />
           <Row label="Cada semifinalista"             val={P.semi}       />

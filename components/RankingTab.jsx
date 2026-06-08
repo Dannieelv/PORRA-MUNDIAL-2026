@@ -10,7 +10,7 @@ const MODES = [
   { key: 'total',      label: 'Total'    },
   { key: 'match',      label: 'Partidos' },
   { key: 'clasif',     label: 'Grupos'   },
-  { key: 'tournament', label: '🌍 Torneo' },
+  { key: 'tournament', label: 'Torneo' },
 ];
 
 /* ── Bracket visual ── */
@@ -29,13 +29,13 @@ function Bracket({ players, config }) {
     <div className={`${bk.team} ${semisReal.includes(name) ? bk.real : ''}`}
          style={align === 'right' ? { flexDirection: 'row-reverse' } : {}}>
       {name ? <><TeamFlag name={name} size={16} /><span>{name}</span></> : <span className={bk.empty}>—</span>}
-      {semiCount[name] > 0 && <span className={bk.count}>{semiCount[name]}👤</span>}
+      {semiCount[name] > 0 && <span className={bk.count}>{semiCount[name]}</span>}
     </div>
   );
 
   return (
     <div className={bk.wrap}>
-      <div className={bk.header}>🏟️ BRACKET FINAL</div>
+      <div className={bk.header}>BRACKET FINAL</div>
       <div className={bk.grid}>
         <div className={bk.col}>
           <div className={bk.colLabel}>SF 1</div>
@@ -48,7 +48,9 @@ function Bracket({ players, config }) {
           <div className={`${bk.finalist} ${runnerReal ? bk.real : ''}`}>
             {runnerReal ? <><TeamFlag name={runnerReal} size={16} /><span>{runnerReal}</span></> : <span className={bk.empty}>Subcampeón</span>}
           </div>
-          <div className={bk.trophy}>🏆</div>
+          <div className={bk.trophy}>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 2L7 8H3v6c0 3.3 2.7 6 6 6h1.4c1 1.7 2.5 3 4.6 3.5V26H9v2h10v-2h-6v-2.5C15.1 23 16.6 21.7 17.6 20H19c3.3 0 6-2.7 6-6V8h-4L14 2z" fill="#F59E0B"/><path d="M14 2L7 8H3v6c0 3.3 2.7 6 6 6h1.4c1 1.7 2.5 3 4.6 3.5V26H9v2h10v-2h-6v-2.5C15.1 23 16.6 21.7 17.6 20H19c3.3 0 6-2.7 6-6V8h-4L14 2z" fill="none" stroke="#EA580B" strokeWidth="1"/></svg>
+          </div>
           <div className={`${bk.finalist} ${bk.champBox} ${champReal ? bk.real : ''}`}>
             {champReal ? <><TeamFlag name={champReal} size={16} /><span>{champReal}</span></> : <span className={bk.empty}>Campeón</span>}
           </div>
@@ -61,7 +63,7 @@ function Bracket({ players, config }) {
         </div>
       </div>
       <p className={bk.hint}>
-        {semisReal.length === 4 ? '⚡ Resultado oficial' : '👥 Top predicciones del grupo'}
+        {semisReal.length === 4 ? 'Resultado oficial' : 'Top predicciones del grupo'}
       </p>
     </div>
   );
@@ -84,12 +86,12 @@ function Breakdown({ player, config, onClose }) {
 
   return (
     <div>
-      <button className={styles.backBtn2} onClick={onClose}>← Volver</button>
+      <button className={styles.backBtn2} onClick={onClose}>‹ Volver</button>
       <div className={styles.breakdownTitle}>{player.name}</div>
 
       {matchRows.length > 0 && (
         <div className={styles.card} style={{marginTop: 12}}>
-          <div className={styles.cardTitle}>⚽ Partidos</div>
+          <div className={styles.cardTitle}>Partidos</div>
           {matchRows.map(({ m, pred, res, pts }) => (
             <div key={m.id} className={styles.bdRow}>
               <div className={styles.bdMatch}>
@@ -108,7 +110,7 @@ function Breakdown({ player, config, onClose }) {
 
       {clasif > 0 && (
         <div className={styles.card} style={{marginTop: 12}}>
-          <div className={styles.cardTitle}>📊 Grupos · {clasif} pts</div>
+          <div className={styles.cardTitle}>Grupos · {clasif} pts</div>
           {GROUPS.map(g => {
             if (!groupComplete(g, results)) return null;
             const real  = standings(g, results).map(t => t.name);
@@ -128,7 +130,7 @@ function Breakdown({ player, config, onClose }) {
 
       {tournament > 0 && (
         <div className={styles.card} style={{marginTop: 12}}>
-          <div className={styles.cardTitle}>🌍 Torneo · {tournament} pts</div>
+          <div className={styles.cardTitle}>Torneo · {tournament} pts</div>
           {[
             { key: 'champion',    label: 'Campeón',      p: points.champion    ?? 10 },
             { key: 'runnerUp',    label: 'Subcampeón',   p: points.runnerUp    ?? 6  },
@@ -187,7 +189,7 @@ export default function RankingTab({ players, me, config }) {
   return (
     <div className={styles.tabWrap}>
       <div className={styles.card}>
-        <h2 className={styles.cardTitle}>🏆 Clasificación</h2>
+        <h2 className={styles.cardTitle}>Clasificación</h2>
         <div className={styles.seg}>
           {MODES.map(m => (
             <button key={m.key} className={mode === m.key ? styles.segActive : ''} onClick={() => setMode(m.key)}>
@@ -196,7 +198,7 @@ export default function RankingTab({ players, me, config }) {
           ))}
         </div>
         <button className={styles.bracketBtn} onClick={() => setShowBracket(v => !v)}>
-          {showBracket ? '▲ Ocultar bracket' : '🏟️ Ver bracket final'}
+          {showBracket ? '▲ Ocultar bracket' : 'Ver bracket final'}
         </button>
       </div>
 
