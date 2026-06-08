@@ -2,7 +2,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
+  gap: 10px;
   margin-top: 4px;
 }
 
@@ -11,54 +11,55 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 20px 12px 16px;
-  background: #fff;
-  border: 2px solid #e7e1f4;
-  border-radius: 18px;
+  padding: 18px 12px 14px;
+  background: var(--surface);
+  border: 2px solid var(--surface-3);
+  border-left: 4px solid var(--surface-3);
   cursor: pointer;
   font-family: inherit;
-  transition: transform .15s, box-shadow .15s, border-color .15s;
-  box-shadow: 0 4px 14px rgba(124,97,212,.1);
+  transition: border-color .12s, background .12s;
 }
 .playerCard:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(124,97,212,.22);
-  border-color: #7C61D4;
+  border-color: var(--border);
+  border-left-color: var(--border);
+  background: var(--surface-2);
 }
 
 .meCard {
-  border-color: #7C61D4;
-  background: #f5f0ff;
+  border-color: var(--gold);
+  border-left-color: var(--gold);
 }
 
 .avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #7C61D4, #5e45b0);
+  width: 48px;
+  height: 48px;
+  background: var(--primary);
   color: #fff;
-  font-size: 22px;
-  font-weight: 900;
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(124,97,212,.35);
 }
 
 .pname {
   font-weight: 800;
-  font-size: 14px;
-  color: #2d2540;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
   text-align: center;
 }
 
 .meBadge {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  color: #7C61D4;
-  background: #ede8ff;
-  padding: 2px 8px;
-  border-radius: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(245,158,11,.12);
+  padding: 2px 6px;
+  border: 1px solid var(--gold);
 }
 
 /* ── Header jugador seleccionado ─────────────────── */
@@ -71,18 +72,19 @@
 }
 
 .backBtn {
-  background: #efe9fc;
-  border: none;
-  border-radius: 10px;
-  padding: 8px 14px;
+  background: var(--surface-2);
+  border: 2px solid var(--surface-3);
+  padding: 7px 12px;
   font-weight: 800;
-  font-size: 13px;
-  color: #7C61D4;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary);
   cursor: pointer;
   font-family: inherit;
-  transition: background .15s;
+  transition: background .1s;
 }
-.backBtn:hover { background: #ddd5f8; }
+.backBtn:hover { background: var(--surface-3); }
 
 .playerTitle {
   display: flex;
@@ -92,23 +94,24 @@
 }
 
 .bigAvatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #7C61D4, #5e45b0);
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
   color: #fff;
-  font-size: 18px;
-  font-weight: 900;
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 10px rgba(124,97,212,.35);
 }
 
 .playerName {
-  font-size: 20px;
-  font-weight: 900;
-  color: #2d2540;
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
 }
 
 /* ── Predicción de resultado ─────────────────────── */
@@ -119,25 +122,27 @@
 }
 
 .scoreDisplay {
-  font-size: 17px;
-  font-weight: 900;
-  color: #2d2540;
-  letter-spacing: 1px;
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--text);
+  letter-spacing: 0.05em;
 }
 
 .noPred {
   font-size: 18px;
-  color: #c5b8e8;
+  color: var(--surface-3);
   font-weight: 700;
 }
 
 .badgePending {
-  font-size: 11px;
-  font-weight: 700;
-  color: #f59e0b;
-  background: #fef3c7;
-  border-radius: 8px;
-  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(245,158,11,.1);
+  border: 1px solid var(--gold);
+  padding: 2px 6px;
 }
 
 /* ── Reacciones 😂 ───────────────────────────────── */
@@ -145,20 +150,19 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  background: #fef3c7;
-  border: 1.5px solid #f59e0b;
-  border-radius: 8px;
-  padding: 2px 8px;
+  background: var(--surface-2);
+  border: 2px solid var(--surface-3);
+  padding: 3px 8px;
   font-size: 13px;
   cursor: pointer;
   font-family: inherit;
-  transition: background .12s, transform .1s;
+  transition: background .1s, border-color .1s, transform .08s;
   margin-left: 2px;
 }
-.reactBtn:hover { background: #fde68a; transform: scale(1.08); }
+.reactBtn:hover { background: var(--surface-3); transform: scale(1.06); }
 .reactActive {
-  background: #7C61D4 !important;
-  border-color: #7C61D4 !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
   color: #fff;
 }
 .reactCount {
@@ -166,12 +170,14 @@
   font-size: 11px;
 }
 .reactReceived {
-  font-size: 12px;
-  font-weight: 700;
-  color: #7C61D4;
-  background: #ede8ff;
-  border-radius: 8px;
-  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: rgba(234,88,11,.1);
+  border: 1px solid var(--primary);
+  padding: 2px 6px;
 }
 
 /* ── Grupos (solo lectura) ───────────────────────── */
@@ -180,14 +186,14 @@
   align-items: center;
   gap: 10px;
   padding: 10px 6px;
-  border-bottom: 1px solid #f0ecfa;
+  border-bottom: 1px solid var(--surface-3);
 }
 .groupRow:last-child { border-bottom: none; }
 
 .groupPos {
-  font-size: 13px;
-  font-weight: 900;
-  color: #7C61D4;
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  color: var(--primary);
   width: 24px;
   text-align: center;
   flex-shrink: 0;
@@ -196,5 +202,7 @@
 .groupName {
   font-size: 14px;
   font-weight: 700;
-  color: #2d2540;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
 }

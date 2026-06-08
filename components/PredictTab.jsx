@@ -202,8 +202,7 @@ function TSelect({ label, value, onChange }) {
   return (
     <div className={styles.field}>
       <label>{label}</label>
-      <select value={value} onChange={e => onChange(e.target.value)}
-        style={{ fontFamily: 'inherit', fontSize: 15, padding: '10px 12px', border: '2px solid #e7e1f4', borderRadius: 12, width: '100%', background: '#fff', color: '#2F281D' }}>
+      <select value={value} onChange={e => onChange(e.target.value)} className={styles.tSelect}>
         <option value="">— Sin seleccionar —</option>
         {ALL_TEAMS.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
       </select>
@@ -217,7 +216,7 @@ function TText({ label, value, onChange, placeholder }) {
       <label>{label}</label>
       <input type="text" value={value} placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        style={{ fontFamily: 'inherit', fontSize: 15, padding: '10px 12px', border: '2px solid #e7e1f4', borderRadius: 12, width: '100%', background: '#fff', color: '#2F281D' }} />
+        className={styles.tInput} />
     </div>
   );
 }

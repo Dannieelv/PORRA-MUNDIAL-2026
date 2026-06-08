@@ -4,35 +4,39 @@
   align-items: center;
   gap: 10px;
   padding: 10px 6px;
-  border-bottom: 1px solid #f0ecfa;
+  border-bottom: 1px solid var(--surface-3);
 }
 .groupRow:last-child { border-bottom: none; }
 
 .groupPos {
-  font-size: 14px;
-  font-weight: 900;
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
   width: 28px;
   text-align: center;
   flex-shrink: 0;
-  color: #7a7266;
+  color: var(--text-muted);
 }
-.first  { color: #E0A800; }
-.second { color: #7C61D4; }
+.first  { color: var(--gold); }
+.second { color: var(--primary); }
 
 .groupName {
   font-size: 14px;
-  font-weight: 700;
-  color: #2d2540;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
   flex: 1;
 }
 
 .groupStats {
-  font-size: 12px;
-  font-weight: 700;
-  color: #7a7266;
-  background: #f4f1fb;
-  padding: 3px 8px;
-  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  padding: 3px 7px;
   flex-shrink: 0;
 }
 
@@ -49,34 +53,37 @@
   align-items: center;
   gap: 6px;
   padding: 8px 10px;
-  background: #faf8ff;
-  border: 2px solid #e7e1f4;
-  border-radius: 10px;
+  background: var(--surface-2);
+  border: 2px solid var(--surface-3);
   font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  color: #2d2540;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: background .12s, border-color .12s;
+  transition: background .1s, border-color .1s, color .1s;
   text-align: left;
 }
-.semiBtn:hover { border-color: #7C61D4; background: #efe9fc; }
+.semiBtn:hover { border-color: var(--primary); color: var(--text); }
 
 .semiSelected {
-  background: #7C61D4 !important;
-  border-color: #7C61D4 !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
   color: #fff !important;
 }
 
 .semiDisabled {
-  opacity: .4;
+  opacity: .35;
   cursor: not-allowed;
 }
 
 .semiCount {
   font-size: 12px;
-  font-weight: 700;
-  color: #7C61D4;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary);
   text-align: right;
   margin-top: 4px;
 }
