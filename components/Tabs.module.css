@@ -327,6 +327,22 @@
 
 /* ===== Ranking extras ===== */
 .rankArrow { color: var(--primary); font-size: 20px; flex-shrink: 0; }
+
+/* ===== Notify button (Admin) ===== */
+.notifyBtn {
+  background: var(--surface-2);
+  border: 2px solid var(--border-gold);
+  color: var(--gold);
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .1s;
+}
+.notifyBtn:hover { background: rgba(245,158,11,.15); }
 .bracketBtn {
   width: 100%;
   margin-top: 8px;

@@ -47,6 +47,29 @@ export default function AdminTab({ config, onSaveConfig }) {
     showToast('Guardado ✓');
   };
 
+  const notifyResult = async (matchId) => {
+    const m = MATCHES.find(x => x.id === matchId);
+    const r = results[matchId];
+    if (!m || !r || r.h === '') return;
+    try {
+      const res = await fetch('/api/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'notify-all',
+          payload: {
+            title: `Resultado: ${m.t1} ${r.h}-${r.a} ${m.t2}`,
+            body: 'Ya puedes ver tus puntos en la Porra Mundial 2026',
+            tag: `result_${matchId}`,
+            url: '/',
+          },
+        }),
+      });
+      const data = await res.json();
+      showToast(`Notificado a ${data.sent ?? 0} jugadores ✓`);
+    } catch { showToast('Error al notificar'); }
+  };
+
   const setRes = (id, side, val) =>
     setResults(prev => ({ ...prev, [id]: { ...(prev[id] || { h: '', a: '' }), [side]: val } }));
 
@@ -87,6 +110,11 @@ export default function AdminTab({ config, onSaveConfig }) {
                       <input type="number" min="0" inputMode="numeric" value={r.a} onChange={e => setRes(m.id, 'a', e.target.value)} />
                     </div>
                     <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2}</span><TeamFlag name={m.t2} size={20} /></div>
+                    {r.h !== '' && (
+                      <button className={styles.notifyBtn} onClick={() => notifyResult(m.id)} title="Notificar resultado a todos">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" strokeWidth="2.5"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" strokeWidth="2.5"/></svg>
+                      </button>
+                    )}
                   </div>
                 );
               })}

@@ -1,0 +1,97 @@
+/* ===== Match row clickable ===== */
+.clickable { cursor: pointer; }
+.clickable:hover { border-left-color: var(--gold) !important; }
+
+.expandIcon {
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+/* ===== Who Got It panel ===== */
+.whoWrap {
+  background: var(--bg-deep);
+  border-left: 4px solid var(--gold);
+  border-right: 1px solid var(--surface-3);
+  border-bottom: 1px solid var(--surface-3);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.whoTitle {
+  font-family: var(--font-barlow), inherit;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding: 8px 12px 4px;
+  border-bottom: 1px solid var(--surface-3);
+}
+
+.whoRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--surface-3);
+  transition: background .1s;
+}
+.whoRow:last-child { border-bottom: none; }
+.whoExact { background: rgba(34,197,94,.05); }
+
+.whoName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.whoPred {
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: center;
+}
+
+.whoBadges {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.badge {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+
+.badgeExact { background: var(--green);    color: #fff; }
+.badgeSign  { background: var(--primary);  color: #fff; }
+.badgeDiff  { background: #2563EB;         color: #fff; }
+.badgeTotal { background: #7C3AED;         color: #fff; }
+.badgeMiss  { background: var(--surface-3); color: var(--text-muted); }
+
+.whoPts {
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: right;
+  letter-spacing: 0.05em;
+}
+.whoPtsPos { color: var(--green); }

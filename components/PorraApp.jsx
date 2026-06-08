@@ -213,7 +213,7 @@ export default function PorraApp() {
         {tab === 'predict' && <PredictTab me={meWithLatest} config={config} onSave={savePlayer} />}
         {tab === 'ranking' && <RankingTab players={players} me={me} config={config} />}
         {tab === 'bets'    && <BetsTab players={players} me={me} config={config} reactions={reactions} onReact={handleReact} />}
-        {tab === 'matches' && <MatchesTab config={config} />}
+        {tab === 'matches' && <MatchesTab config={config} players={players} />}
         {tab === 'admin'   && <AdminTab config={config} onSaveConfig={saveConfig} />}
       </main>
 

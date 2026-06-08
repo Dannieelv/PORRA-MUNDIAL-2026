@@ -26,6 +26,29 @@ async function getSubscription(playerId) {
   } catch { return null; }
 }
 
+async function getAllSubscriptions() {
+  try {
+    const res = await fetch(`${FIRESTORE_URL}/pushSubs`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data.documents) return [];
+    return data.documents.map(doc => {
+      const id = doc.name.split('/').pop();
+      if (!doc.fields?.endpoint) return null;
+      return {
+        playerId: id,
+        sub: {
+          endpoint: doc.fields.endpoint.stringValue,
+          keys: {
+            p256dh: doc.fields.p256dh.stringValue,
+            auth:   doc.fields.auth.stringValue,
+          },
+        },
+      };
+    }).filter(Boolean);
+  } catch { return []; }
+}
+
 export async function POST(req) {
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
     return Response.json({ ok: false, error: 'VAPID keys not configured' }, { status: 500 });
@@ -55,21 +78,42 @@ export async function POST(req) {
     }
   }
 
-  // Enviar notificación push
+  // Enviar notificación a un jugador
   if (action === 'notify') {
     const sub = await getSubscription(playerId);
     if (!sub) return Response.json({ ok: false, error: 'No subscription' });
-
     try {
       await webpush.sendNotification(sub, JSON.stringify(payload));
       return Response.json({ ok: true });
     } catch (e) {
-      // Suscripción expirada — la borramos
       if (e.statusCode === 410) {
         await fetch(`${FIRESTORE_URL}/pushSubs/${playerId}`, { method: 'DELETE' });
       }
       return Response.json({ ok: false, error: e.message }, { status: 500 });
     }
+  }
+
+  // Enviar notificación a TODOS los jugadores suscritos
+  if (action === 'notify-all') {
+    const subs = await getAllSubscriptions();
+    if (subs.length === 0) return Response.json({ ok: true, sent: 0 });
+
+    const results = await Promise.allSettled(
+      subs.map(async ({ playerId: pid, sub }) => {
+        try {
+          await webpush.sendNotification(sub, JSON.stringify(payload));
+          return { pid, ok: true };
+        } catch (e) {
+          if (e.statusCode === 410) {
+            await fetch(`${FIRESTORE_URL}/pushSubs/${pid}`, { method: 'DELETE' });
+          }
+          return { pid, ok: false };
+        }
+      })
+    );
+
+    const sent = results.filter(r => r.status === 'fulfilled' && r.value.ok).length;
+    return Response.json({ ok: true, sent, total: subs.length });
   }
 
   return Response.json({ ok: false, error: 'Unknown action' }, { status: 400 });
