@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { MATCHES, GROUPS, TEAMS } from '@/lib/data';
 import { standings, fmtDate } from '@/lib/scoring';
 import TeamFlag from './TeamFlag';
+import Countdown from './Countdown';
 import styles from './Tabs.module.css';
 
 export default function MatchesTab({ config }) {
@@ -21,10 +22,15 @@ export default function MatchesTab({ config }) {
           {MATCHES.filter(m => m.md === md).map(m => {
             const r = config.results[m.id];
             return (
-              <div key={m.id} className={styles.match}>
-                <div className={styles.team}><TeamFlag name={m.t1} size={20} /><span className={styles.teamName}>{m.t1}</span></div>
-                <div className={styles.resPill}>{r && r.h !== '' ? `${r.h}-${r.a}` : '—'}</div>
-                <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2}</span><TeamFlag name={m.t2} size={20} /></div>
+              <div key={m.id}>
+                <div className={styles.match}>
+                  <div className={styles.team}><TeamFlag name={m.t1} size={20} /><span className={styles.teamName}>{m.t1}</span></div>
+                  <div className={styles.resPill}>{r && r.h !== '' ? `${r.h}-${r.a}` : '—'}</div>
+                  <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2}</span><TeamFlag name={m.t2} size={20} /></div>
+                </div>
+                <div className={styles.meta} style={{marginBottom: 8}}>
+                  {fmtDate(m.date)} · <Countdown match={m} />
+                </div>
               </div>
             );
           })}

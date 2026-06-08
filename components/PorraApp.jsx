@@ -9,7 +9,38 @@ import MatchesTab from './MatchesTab';
 import AdminTab from './AdminTab';
 import BetsTab from './BetsTab';
 import ScorePopup from './ScorePopup';
+import OnboardingModal from './OnboardingModal';
 import styles from './PorraApp.module.css';
+
+const VAPID_PUBLIC = 'BCtEG7SpkyP_evxcDd4cErkyoJcXscRJeoRUc4XiqogdCWKHoeJ_mzrDia5repb75qRc__dcyW4K5ZRjYoyqU5g';
+
+async function subscribePush(playerId) {
+  try {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: VAPID_PUBLIC,
+    });
+    await fetch('/api/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'subscribe', playerId, subscription: sub.toJSON() }),
+    });
+  } catch (e) { console.warn('Push subscribe failed:', e); }
+}
+
+async function sendPushNotification(toPlayerId, payload) {
+  try {
+    await fetch('/api/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'notify', playerId: toPlayerId, payload }),
+    });
+  } catch (e) { console.warn('Push notify failed:', e); }
+}
 
 const TABS = [
   { id: 'predict', label: 'Mi Porrita', icon: '📝' },
@@ -27,7 +58,8 @@ export default function PorraApp() {
   const [me, setMe]             = useState(null);
   const [tab, setTab]           = useState('predict');
   const [banner, setBanner]     = useState({ msg: '', kind: '' });
-  const [showScore, setShowScore] = useState(false);
+  const [showScore, setShowScore]     = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [reactionNote, setReactionNote] = useState('');
   const lastSeenRef = useRef(0);
 
@@ -92,6 +124,7 @@ export default function PorraApp() {
     if (!store) return;
     const id = slugify(name);
     const existing = players[id];
+    const isNew = !existing;
     if (existing) {
       if (existing.pin && existing.pin !== pin) return 'PIN incorrecto para ese nombre';
       setMe({ id, ...existing });
@@ -102,6 +135,11 @@ export default function PorraApp() {
       store.savePlayer(id, { name, pin, scores: {}, groupPicks: {}, tournament: {} });
       localStorage.setItem('porra_me', id);
     }
+    // Mostrar onboarding si es nuevo jugador o nunca lo ha visto
+    const seen = localStorage.getItem('porra_onboarding_done');
+    if (!seen || isNew) setShowOnboarding(true);
+    // Suscribir a push notifications
+    subscribePush(id);
     return null;
   }, [store, players]);
 
@@ -123,15 +161,19 @@ export default function PorraApp() {
     const reactionId = `${me.id}_${matchId}_${toPlayerId}`;
     const existing = reactions[reactionId];
     if (existing) {
-      await store.saveReaction(reactionId, null); // toggle off
+      await store.saveReaction(reactionId, null);
     } else {
+      const match = MATCHES.find(x => x.id === matchId);
+      const matchLabel = match ? `${match.t1} vs ${match.t2}` : 'un partido';
       await store.saveReaction(reactionId, {
-        from: me.id,
-        fromName: me.name,
-        to: toPlayerId,
-        matchId,
-        emoji: '😂',
-        at: Date.now(),
+        from: me.id, fromName: me.name, to: toPlayerId, matchId, emoji: '😂', at: Date.now(),
+      });
+      // Push notification al jugador reaccionado
+      sendPushNotification(toPlayerId, {
+        title: '😂 ¡Se rieron de tu apuesta!',
+        body: `${me.name} reaccionó a tu predicción de ${matchLabel}`,
+        tag: `reaction_${matchId}`,
+        url: '/',
       });
     }
   }, [store, me, reactions]);
@@ -196,6 +238,12 @@ export default function PorraApp() {
       </nav>
 
       {showScore && <ScorePopup points={config.points} onClose={() => setShowScore(false)} />}
+      {showOnboarding && (
+        <OnboardingModal onClose={() => {
+          setShowOnboarding(false);
+          localStorage.setItem('porra_onboarding_done', '1');
+        }} />
+      )}
     </div>
   );
 }

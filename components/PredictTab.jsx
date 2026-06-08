@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { MATCHES, GROUPS, TEAMS } from '@/lib/data';
 import { fmtDate, isMatchLocked, matchPoints, defaultPicks, standings, autoGroupPicks } from '@/lib/scoring';
 import TeamFlag from './TeamFlag';
+import Countdown from './Countdown';
 import styles from './Tabs.module.css';
 import pred from './PredictTab.module.css';
 
@@ -89,7 +90,7 @@ export default function PredictTab({ me, config, onSave }) {
                     <div className={styles.meta}>
                       {fmtDate(m.date)}
                       {m.mult > 1 && <span className={styles.badgeMult}>×{m.mult}</span>}
-                      {locked && <span className={styles.badgeLock}>cerrado</span>}
+                      <Countdown match={m} />
                       {res && (
                         <>
                           <span className={styles.resPill}>{res.h}-{res.a}</span>

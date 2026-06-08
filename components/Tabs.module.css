@@ -324,3 +324,99 @@
   border-color: var(--primary);
 }
 .tSelect option { background: var(--surface); color: var(--text); }
+
+/* ===== Ranking extras ===== */
+.rankArrow { color: var(--primary); font-size: 20px; flex-shrink: 0; }
+.bracketBtn {
+  width: 100%;
+  margin-top: 8px;
+  background: var(--surface-2);
+  border: 2px solid var(--border-gold);
+  color: var(--gold);
+  font-family: var(--font-barlow), inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px;
+  cursor: pointer;
+  transition: background .1s;
+}
+.bracketBtn:hover { background: var(--surface-3); }
+
+/* ===== Points breakdown ===== */
+.backBtn2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 2px solid var(--surface-3);
+  color: var(--primary);
+  font-family: var(--font-barlow), inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.backBtn2:hover { background: var(--surface-3); }
+
+.breakdownTitle {
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.bdRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--surface-3);
+}
+.bdRow:last-child { border-bottom: none; }
+
+.bdMatch {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  flex-wrap: wrap;
+}
+
+.bdScore {
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+
+.bdRes {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--surface-3);
+  padding: 2px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bdPts {
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+.bdPtsPos { color: var(--green); }
