@@ -109,7 +109,7 @@ export default function PorraApp() {
     }
   }, [reactions]);
 
-  // Restore me from localStorage
+  // Restore me from localStorage + re-subscribe push on every load
   useEffect(() => {
     const savedId = localStorage.getItem('porra_me');
     if (savedId) {
@@ -117,6 +117,8 @@ export default function PorraApp() {
         if (prev[savedId]) setMe({ id: savedId, ...prev[savedId] });
         return prev;
       });
+      // Re-register push subscription silently (fixes stale/missing subs)
+      subscribePush(savedId);
     }
   }, [players]);
 
@@ -170,8 +172,8 @@ export default function PorraApp() {
       });
       // Push notification al jugador reaccionado
       sendPushNotification(toPlayerId, {
-        title: '😂 ¡Se rieron de tu apuesta!',
-        body: `${me.name} reaccionó a tu predicción de ${matchLabel}`,
+        title: `${me.name} piensa que te has flipado`,
+        body: `Ha reaccionado a tu predicción de ${matchLabel}`,
         tag: `reaction_${matchId}`,
         url: '/',
       });
