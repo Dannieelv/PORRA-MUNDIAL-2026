@@ -1,4 +1,4 @@
-const CACHE = 'porra-2026-v8';
+const CACHE = 'porra-2026-v9';
 const ASSETS = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
