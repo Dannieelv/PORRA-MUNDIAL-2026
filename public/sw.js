@@ -1,8 +1,12 @@
-const CACHE = 'porra-2026-v9';
+const CACHE = 'porra-2026-v10';
 const ASSETS = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
+// Instala y salta a activo inmediatamente — sin esperar a que cierren pestañas
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(ASSETS))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('message', e => {
@@ -11,15 +15,22 @@ self.addEventListener('message', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    caches.keys()
+      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
+      .then(() => {
+        // Notifica a todas las pestañas abiertas para que recarguen
+        return self.clients.matchAll({ type: 'window' }).then(clients => {
+          clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+        });
+      })
   );
 });
 
 self.addEventListener('fetch', e => {
   const url = e.request.url;
   if (url.includes('firestore') || url.includes('firebase') || url.includes('googleapis')) return;
-  if (url.includes('/api/')) return; // no cachear API routes
+  if (url.includes('/api/')) return;
   e.respondWith(
     caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
       if (e.request.method === 'GET' && res.ok) {
@@ -38,13 +49,14 @@ self.addEventListener('push', e => {
   try { data = e.data.json(); } catch { data = { title: 'Porra 2026', body: e.data.text() }; }
 
   e.waitUntil(
-    self.registration.showNotification(data.title || '⚽ Porra Mundial 2026', {
+    self.registration.showNotification(data.title || 'Porra Mundial 2026', {
       body: data.body || '¡Tienes una nueva notificación!',
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
       tag: data.tag || 'porra-notif',
       data: { url: data.url || '/' },
       vibrate: [200, 100, 200],
+      requireInteraction: false,
     })
   );
 });

@@ -68,6 +68,16 @@ export default function PorraApp() {
     lastSeenRef.current = +(localStorage.getItem('porra_reactions_seen') || 0);
   }, []);
 
+  // Escuchar SW_UPDATED y recargar para aplicar el nuevo service worker
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const handler = (e) => {
+      if (e.data?.type === 'SW_UPDATED') window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener('message', handler);
+    return () => navigator.serviceWorker.removeEventListener('message', handler);
+  }, []);
+
   // Init store
   useEffect(() => {
     createStore().then(s => {
