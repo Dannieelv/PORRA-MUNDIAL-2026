@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Calendar body -->
+  <rect x="4" y="8" width="40" height="36" rx="1" fill="#EA580B" opacity="0.15" stroke="#EA580B" stroke-width="2"/>
+  <!-- Header bar -->
+  <rect x="4" y="8" width="40" height="10" fill="#EA580B"/>
+  <!-- Calendar hooks -->
+  <rect x="13" y="4" width="4" height="8" rx="1" fill="#EA580B"/>
+  <rect x="31" y="4" width="4" height="8" rx="1" fill="#EA580B"/>
+  <!-- Checkmark (big, centered) -->
+  <polyline points="13,30 20,37 35,22" stroke="#F59E0B" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+</svg>

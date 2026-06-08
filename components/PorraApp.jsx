@@ -43,11 +43,11 @@ async function sendPushNotification(toPlayerId, payload) {
 }
 
 const TABS = [
-  { id: 'predict', label: 'Mi Porrita', icon: '📝' },
-  { id: 'ranking', label: 'Ranking',   icon: '🏆' },
-  { id: 'bets',    label: 'Porras',    icon: '👀' },
-  { id: 'matches', label: 'Partidos',  icon: '📅' },
-  { id: 'admin',   label: 'Admin',     icon: '⚙️' },
+  { id: 'predict', label: 'Mi Porrita', icon: '/icons/tab-predict.svg' },
+  { id: 'ranking', label: 'Ranking',    icon: '/icons/tab-ranking.svg' },
+  { id: 'bets',    label: 'Porras',     icon: '/icons/tab-bets.svg' },
+  { id: 'matches', label: 'Partidos',   icon: '/icons/tab-matches.svg' },
+  { id: 'admin',   label: 'Admin',      icon: '/icons/tab-admin.svg' },
 ];
 
 export default function PorraApp() {
@@ -102,7 +102,7 @@ export default function PorraApp() {
             return m ? `${m.t1} vs ${m.t2}` : 'tu predicción';
           })()
         : 'tu predicción';
-      setReactionNote(`😂 ${last.fromName} se ha reído de tu pronóstico: ${matchLabel}`);
+      setReactionNote(`⚡ ${last.fromName} se ha flipado con tu pronóstico: ${matchLabel}`);
       setTimeout(() => setReactionNote(''), 5000);
       lastSeenRef.current = newest;
       localStorage.setItem('porra_reactions_seen', String(newest));
@@ -195,7 +195,7 @@ export default function PorraApp() {
     <div className={styles.root}>
       <header className={styles.header}>
         <div className={styles.brand}>
-          <span className={styles.ball}>⚽</span>
+          <img src="/icons/logo.svg" alt="Logo" className={styles.logoImg} />
           <h1>Porra Mundial <span>2026</span></h1>
         </div>
         <div className={styles.who}>
@@ -220,8 +220,8 @@ export default function PorraApp() {
           <button key={t.id}
             className={`${styles.tabBtn} ${tab === t.id ? styles.tabActive : ''}`}
             onClick={() => setTab(t.id)}>
-            <span style={{ position: 'relative' }}>
-              {t.icon}
+            <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src={t.icon} alt={t.label} style={{ width: 24, height: 24 }} />
               {t.id === 'bets' && myNewReactions > 0 && (
                 <span style={{
                   position: 'absolute', top: -4, right: -6,
@@ -263,7 +263,7 @@ function Welcome({ players, onEnter, loading }) {
   return (
     <div className={styles.welcomeWrap}>
       <div className={styles.welcomeInner}>
-        <div className={styles.bigBall}>⚽🏆</div>
+        <img src="/icons/logo.svg" alt="Logo Porra 2026" className={styles.welcomeLogo} />
         <h1 className={styles.bigTitle}>Porra Mundial 2026</h1>
         <p className={styles.sub}>Pon tu nombre, predice los partidos y compite con todos en la clasificación.</p>
 

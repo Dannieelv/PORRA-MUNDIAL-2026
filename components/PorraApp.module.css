@@ -18,6 +18,7 @@
 }
 .brand { display: flex; align-items: center; gap: 10px; }
 .ball  { font-size: 24px; }
+.logoImg { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
 .header h1 {
   font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
   font-size: 22px;
@@ -135,6 +136,7 @@
 }
 .welcomeInner { max-width: 400px; width: 100%; }
 .bigBall { font-size: 56px; margin-bottom: 8px; display: block; text-align: center; }
+.welcomeLogo { width: 100px; height: 100px; object-fit: contain; display: block; margin: 0 auto 8px; }
 .bigTitle {
   font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
   font-size: 52px;

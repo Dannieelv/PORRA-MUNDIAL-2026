@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 115" fill="none">
+  <!-- Flames back -->
+  <ellipse cx="50" cy="60" rx="34" ry="36" fill="#1a0a00"/>
+  <path d="M50 8 C44 18 36 14 38 28 C32 20 28 30 34 40 C26 34 22 46 30 54 C20 50 18 64 28 68 C22 76 26 88 36 88 C32 96 40 104 50 100 C60 104 68 96 64 88 C74 88 78 76 72 68 C82 64 80 50 70 54 C78 46 74 34 66 40 C72 30 68 20 62 28 C64 14 56 18 50 8Z" fill="#EA580B"/>
+  <!-- Inner flame -->
+  <path d="M50 22 C46 30 40 28 42 38 C37 32 34 40 39 47 C33 43 31 53 38 56 C33 62 36 72 44 72 C41 78 47 84 50 82 C53 84 59 78 56 72 C64 72 67 62 62 56 C69 53 67 43 61 47 C66 40 63 32 58 38 C60 28 54 30 50 22Z" fill="#F59E0B"/>
+  <!-- Soccer ball -->
+  <circle cx="50" cy="60" r="24" fill="#0d0a01" stroke="#EA580B" stroke-width="1.5"/>
+  <!-- Pentagon pattern -->
+  <polygon points="50,42 56,47 54,54 46,54 44,47" fill="#EA580B" opacity="0.7"/>
+  <polygon points="26,56 32,51 37,55 36,62 29,64" fill="#EA580B" opacity="0.5"/>
+  <polygon points="74,56 68,51 63,55 64,62 71,64" fill="#EA580B" opacity="0.5"/>
+  <polygon points="38,75 43,69 50,71 53,78 45,81" fill="#EA580B" opacity="0.5"/>
+  <polygon points="62,75 57,69 50,71 47,78 55,81" fill="#EA580B" opacity="0.5"/>
+  <!-- Lines connecting pentagons -->
+  <line x1="50" y1="54" x2="46" y2="54" stroke="#EA580B" stroke-width="1" opacity="0.6"/>
+  <line x1="50" y1="54" x2="54" y2="54" stroke="#EA580B" stroke-width="1" opacity="0.6"/>
+  <line x1="44" y1="47" x2="37" y2="55" stroke="#EA580B" stroke-width="1" opacity="0.4"/>
+  <line x1="56" y1="47" x2="63" y2="55" stroke="#EA580B" stroke-width="1" opacity="0.4"/>
+  <line x1="36" y1="62" x2="43" y2="69" stroke="#EA580B" stroke-width="1" opacity="0.4"/>
+  <line x1="64" y1="62" x2="57" y2="69" stroke="#EA580B" stroke-width="1" opacity="0.4"/>
+  <!-- 2026 text -->
+  <text x="50" y="110" text-anchor="middle" font-family="'Bebas Neue', sans-serif" font-size="14" font-weight="700" fill="#F59E0B" letter-spacing="3">2026</text>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
+  <!-- Face circle -->
+  <circle cx="40" cy="40" r="38" fill="#EA580B"/>
+  <!-- Left eye - lightning bolt -->
+  <polygon points="23,20 19,30 24,30 20,40 29,26 24,26 28,20" fill="#0d0a01"/>
+  <!-- Right eye - lightning bolt -->
+  <polygon points="52,20 48,30 53,30 49,40 58,26 53,26 57,20" fill="#0d0a01"/>
+  <!-- Angular mouth -->
+  <path d="M22 54 L30 48 L40 58 L50 48 L58 54" stroke="#0d0a01" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+  <!-- Cheek dots -->
+  <circle cx="16" cy="48" r="4" fill="#c44a08"/>
+  <circle cx="64" cy="48" r="4" fill="#c44a08"/>
+  <!-- Forehead lines / intensity -->
+  <line x1="18" y1="14" x2="22" y2="18" stroke="#c44a08" stroke-width="2.5" stroke-linecap="square"/>
+  <line x1="26" y1="11" x2="27" y2="16" stroke="#c44a08" stroke-width="2.5" stroke-linecap="square"/>
+  <line x1="62" y1="14" x2="58" y2="18" stroke="#c44a08" stroke-width="2.5" stroke-linecap="square"/>
+  <line x1="54" y1="11" x2="53" y2="16" stroke="#c44a08" stroke-width="2.5" stroke-linecap="square"/>
+</svg>

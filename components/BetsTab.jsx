@@ -123,12 +123,13 @@ export default function BetsTab({ players, me, config, reactions, onReact }) {
                           onClick={() => onReact(selected, m.id)}
                           title={myReact ? 'Quitar reacción' : '¡Qué locura! 😂'}
                         >
-                          😂 {count > 0 && <span className={bets.reactCount}>{count}</span>}
+                          <img src="/icons/reaction-flipado.svg" alt="flipado" style={{ width: 18, height: 18, verticalAlign: 'middle' }} />
+                          {' '}{count > 0 && <span className={bets.reactCount}>{count}</span>}
                         </button>
                       )}
                       {/* Mostrar reacciones recibidas (sin poder reaccionar a las propias) */}
                       {!isOther && count > 0 && (
-                        <span className={bets.reactReceived}>😂 ×{count}</span>
+                        <span className={bets.reactReceived}><img src="/icons/reaction-flipado.svg" alt="flipado" style={{ width: 14, height: 14, verticalAlign: 'middle' }} /> ×{count}</span>
                       )}
                     </div>
                   </div>

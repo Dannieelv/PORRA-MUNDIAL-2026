@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Shield shape -->
+  <path d="M24 3 L42 11 L42 26 C42 36 34 43 24 47 C14 43 6 36 6 26 L6 11 Z" fill="#EA580B" opacity="0.2" stroke="#EA580B" stroke-width="2.5"/>
+  <!-- Inner shield fill accent -->
+  <path d="M24 9 L38 16 L38 26 C38 33 32 39 24 43 C16 39 10 33 10 26 L10 16 Z" fill="#EA580B" opacity="0.3"/>
+  <!-- Bolt / control symbol -->
+  <polygon points="27,14 21,26 25,26 21,38 31,23 26,23" fill="#F59E0B"/>
+</svg>
