@@ -4,7 +4,8 @@ const VAPID_PUBLIC  = process.env.VAPID_PUBLIC_KEY  || '';
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || '';
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT     || 'mailto:admin@porra2026.app';
 
-const FIRESTORE_URL = 'https://firestore.googleapis.com/v1/projects/porra-mundial-2026/databases/(default)/documents';
+const FIRESTORE_URL = 'https://firestore.googleapis.com/v1/projects/porramundial2026-11161/databases/(default)/documents';
+const K = `key=AIzaSyA07l3z5LqMDwMI1QTCELMzMIt-liudg_w`;
 
 if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
@@ -12,7 +13,7 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
 
 async function getSubscription(playerId) {
   try {
-    const res = await fetch(`${FIRESTORE_URL}/pushSubs/${playerId}`);
+    const res = await fetch(`${FIRESTORE_URL}/pushSubs/${playerId}?${K}`);
     if (!res.ok) return null;
     const doc = await res.json();
     if (!doc.fields?.endpoint) return null;
@@ -28,7 +29,7 @@ async function getSubscription(playerId) {
 
 async function getAllSubscriptions() {
   try {
-    const res = await fetch(`${FIRESTORE_URL}/pushSubs`);
+    const res = await fetch(`${FIRESTORE_URL}/pushSubs?${K}`);
     if (!res.ok) return [];
     const data = await res.json();
     if (!data.documents) return [];
@@ -60,8 +61,7 @@ export async function POST(req) {
   // Guardar suscripción
   if (action === 'subscribe') {
     try {
-      const url = `${FIRESTORE_URL}/pushSubs/${playerId}`;
-      await fetch(url, {
+      await fetch(`${FIRESTORE_URL}/pushSubs/${playerId}?${K}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -87,7 +87,7 @@ export async function POST(req) {
       return Response.json({ ok: true });
     } catch (e) {
       if (e.statusCode === 410) {
-        await fetch(`${FIRESTORE_URL}/pushSubs/${playerId}`, { method: 'DELETE' });
+        await fetch(`${FIRESTORE_URL}/pushSubs/${playerId}?${K}`, { method: 'DELETE' });
       }
       return Response.json({ ok: false, error: e.message }, { status: 500 });
     }
@@ -105,7 +105,7 @@ export async function POST(req) {
           return { pid, ok: true };
         } catch (e) {
           if (e.statusCode === 410) {
-            await fetch(`${FIRESTORE_URL}/pushSubs/${pid}`, { method: 'DELETE' });
+            await fetch(`${FIRESTORE_URL}/pushSubs/${pid}?${K}`, { method: 'DELETE' });
           }
           return { pid, ok: false };
         }

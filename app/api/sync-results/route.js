@@ -2,7 +2,8 @@
 // Called by Vercel Cron every 5 minutes during the tournament
 
 const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY || '';
-const FIRESTORE_URL = 'https://firestore.googleapis.com/v1/projects/porra-mundial-2026/databases/(default)/documents';
+const FIRESTORE_URL = 'https://firestore.googleapis.com/v1/projects/porramundial2026-11161/databases/(default)/documents';
+const FIREBASE_API_KEY = 'AIzaSyA07l3z5LqMDwMI1QTCELMzMIt-liudg_w';
 const WC_COMPETITION = 2000;
 
 // Map football-data.org team names → our app's Spanish names
@@ -85,9 +86,11 @@ const OUR_MATCHES = [
   { id: 'm24', t1: 'Ghana',            t2: 'Panamá',             date: '2026-06-18' },
 ];
 
+const KEY = `?key=${FIREBASE_API_KEY}`;
+
 async function getFirestoreConfig() {
   try {
-    const res = await fetch(`${FIRESTORE_URL}/config/main`);
+    const res = await fetch(`${FIRESTORE_URL}/porra/config${KEY}`);
     if (!res.ok) return null;
     const doc = await res.json();
     if (!doc.fields?.results) return null;
@@ -107,7 +110,7 @@ async function getFirestoreConfig() {
 
 async function saveResultToFirestore(matchId, h, a) {
   // We use a PATCH to update just the result field
-  const url = `${FIRESTORE_URL}/config/main?updateMask.fieldPaths=results.${matchId}`;
+  const url = `${FIRESTORE_URL}/porra/config?key=${FIREBASE_API_KEY}&updateMask.fieldPaths=results.${matchId}`;
   await fetch(url, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

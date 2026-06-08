@@ -1,8 +1,10 @@
 // Endpoint temporal admin — se elimina tras usar
-const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/porra-mundial-2026/databases/(default)/documents`;
+const PROJECT = 'porramundial2026-11161';
+const API_KEY = 'AIzaSyA07l3z5LqMDwMI1QTCELMzMIt-liudg_w';
+const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
 
 async function fsr(path, method = 'GET') {
-  const res = await fetch(`${FIRESTORE_BASE}/${path}`, { method });
+  const res = await fetch(`${BASE}/${path}?key=${API_KEY}`, { method });
   return res.status;
 }
 
@@ -12,13 +14,13 @@ export async function GET(req) {
   const id = searchParams.get('id');
 
   if (action === 'list') {
-    const res = await fetch(`${FIRESTORE_BASE}/players`);
+    const res = await fetch(`${BASE}/players?key=${API_KEY}`);
     const data = await res.json();
     const players = (data.documents || []).map(d => ({
       id: d.name.split('/').pop(),
       name: d.fields?.name?.stringValue || '?',
     }));
-    return Response.json({ ok: true, players, rawStatus: res.status, count: players.length });
+    return Response.json({ ok: true, players, rawStatus: res.status });
   }
 
   if (action === 'delete' && id) {
