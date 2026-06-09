@@ -1,4 +1,4 @@
-const CACHE = 'porra-2026-v11';
+const CACHE = 'porra-2026-v12';
 const ASSETS = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 // Instala y salta a activo inmediatamente — sin esperar a que cierren pestañas

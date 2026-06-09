@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { slugify, autoGroupPicks } from '@/lib/scoring';
+import { slugify, autoGroupPicks, getDeadline, getKnockoutDeadline } from '@/lib/scoring';
 import { createStore, normalizeConfig } from '@/lib/store';
 import { GROUPS, MATCHES } from '@/lib/data';
 import PredictTab from './PredictTab';
@@ -61,7 +61,8 @@ export default function PorraApp() {
   const [showScore, setShowScore]     = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [reactionNote, setReactionNote] = useState('');
-  const lastSeenRef = useRef(0);
+  const lastSeenRef    = useRef(0);
+  const reminderTimers = useRef([]);
 
   // Inicializar lastSeen desde localStorage (solo en cliente)
   useEffect(() => {
@@ -77,6 +78,70 @@ export default function PorraApp() {
     navigator.serviceWorker.addEventListener('message', handler);
     return () => navigator.serviceWorker.removeEventListener('message', handler);
   }, []);
+
+  // ── Recordatorios 1h antes del cierre de apuesta ──────────────
+  useEffect(() => {
+    if (!me) return;
+
+    // Limpiar timers anteriores
+    reminderTimers.current.forEach(clearTimeout);
+    reminderTimers.current = [];
+
+    const ONE_HOUR = 3_600_000;
+    const now      = Date.now();
+
+    async function showReminder(matchLabel) {
+      if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+        try {
+          const reg = await navigator.serviceWorker.ready;
+          reg.showNotification('Apuesta antes de que cierre', {
+            body: `Menos de 1 hora para ${matchLabel} — ¡aún no has apostado!`,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-192.png',
+            tag: `reminder_${matchLabel}`,
+            vibrate: [200, 100, 200],
+            data: { url: '/' },
+          });
+          return;
+        } catch { /* fallback */ }
+      }
+      // Fallback: banner in-app
+      setReactionNote(`Cierra en menos de 1h sin apostar: ${matchLabel}`);
+      setTimeout(() => setReactionNote(''), 8000);
+    }
+
+    function schedule(match, deadline, hasBet) {
+      if (hasBet) return;
+      const timeToDeadline = deadline - now;
+      if (timeToDeadline <= 0) return;           // ya cerrado
+      const timeToReminder = timeToDeadline - ONE_HOUR;
+      const label = `${match.t1} vs ${match.t2}`;
+      if (timeToReminder <= 0) {
+        // Ya estamos dentro de la ventana de 1h — aviso inmediato
+        showReminder(label);
+      } else {
+        // Programar para T-1h
+        const t = setTimeout(() => showReminder(label), timeToReminder);
+        reminderTimers.current.push(t);
+      }
+    }
+
+    // Partidos de grupos
+    MATCHES.forEach(m => {
+      const hasBet = me.scores?.[m.id]?.h !== '' && me.scores?.[m.id]?.h !== undefined;
+      schedule(m, getDeadline(m).getTime(), hasBet);
+    });
+
+    // Partidos de eliminatorias
+    (config?.knockoutMatches || []).forEach(m => {
+      const hasBet = me.knockoutScores?.[m.id]?.h !== '' && me.knockoutScores?.[m.id]?.h !== undefined;
+      schedule(m, getKnockoutDeadline(m).getTime(), hasBet);
+    });
+
+    return () => reminderTimers.current.forEach(clearTimeout);
+  }, [me, config?.knockoutMatches]);
+  // Se re-ejecuta si el jugador guarda una apuesta (scores/knockoutScores cambian en `me`)
+  // y cuando llegan nuevos fixtures de eliminatorias
 
   // Init store
   useEffect(() => {
