@@ -5,6 +5,8 @@ import {
   fmtDate, isMatchLocked, matchPoints, standings,
   knockoutMatchPoints, isKnockoutLocked, getKnockoutCountdown,
 } from '@/lib/scoring';
+import { playerStats } from '@/lib/stats';
+import { getEarnedAchievements } from '@/lib/achievements';
 import TeamFlag from './TeamFlag';
 import Countdown from './Countdown';
 import styles from './Tabs.module.css';
@@ -74,8 +76,27 @@ export default function PredictTab({ me, config, onSave }) {
     }))
     .filter(s => s.matches.length > 0);
 
+  // Logros — solo se calculan si hay partidos con resultado
+  const stats        = playerStats(me, config);
+  const earned       = getEarnedAchievements(stats);
+
   return (
     <div className={styles.tabWrap}>
+      {/* ── Logros — visible solo cuando tienes al menos 1 ── */}
+      {earned.length > 0 && (
+        <div className={pred.achievementsWrap}>
+          <div className={pred.achievementsTitle}>Tus logros</div>
+          <div className={pred.achievementsGrid}>
+            {earned.map(a => (
+              <div key={a.id} className={pred.achievementChip} title={a.desc}>
+                <span className={pred.achievementIcon}>{a.icon}</span>
+                <span className={pred.achievementLabel}>{a.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className={styles.seg}>
         <button className={phase === 'scores'  ? styles.segActive : ''} onClick={() => setPhase('scores')}>Grupos</button>
         {hasKnockout && (

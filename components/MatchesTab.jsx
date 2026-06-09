@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { MATCHES, GROUPS } from '@/lib/data';
-import { standings, fmtDate, matchPoints, knockoutMatchPoints } from '@/lib/scoring';
+import { standings, fmtDate, matchPoints, knockoutMatchPoints, playerScore } from '@/lib/scoring';
 import TeamFlag from './TeamFlag';
 import Countdown from './Countdown';
 import styles from './Tabs.module.css';
@@ -13,9 +13,103 @@ const STAGE_LABELS = {
   SEMI_FINALS:    'Semifinales',
   FINAL:          'Final',
 };
+const STAGE_SHORT = { LAST_16:'1/8', QUARTER_FINALS:'1/4', SEMI_FINALS:'SF', FINAL:'Final' };
 const STAGE_ORDER = ['LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'FINAL'];
 
-export default function MatchesTab({ config, players }) {
+/* ── Bracket visual de eliminatorias ── */
+function KnockoutBracket({ config, players, me }) {
+  const koMatches  = config.knockoutMatches  || [];
+  const koResults  = config.knockoutResults  || {};
+  const mePlayer   = me ? players[me.id] : null;
+
+  if (!koMatches.length) return null;
+
+  const stagesInUse = STAGE_ORDER.filter(s => koMatches.some(m => m.stage === s));
+
+  return (
+    <div style={{ overflowX: 'auto', marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 0, minWidth: stagesInUse.length * 160 }}>
+        {stagesInUse.map(stage => {
+          const sm = koMatches.filter(m => m.stage === stage);
+          return (
+            <div key={stage} style={{ flex: 1, minWidth: 150 }}>
+              {/* Cabecera columna */}
+              <div style={{
+                background: 'var(--accent)', color: '#000',
+                fontFamily: 'var(--font-bebas), Bebas Neue, sans-serif',
+                fontSize: 13, letterSpacing: '0.1em',
+                padding: '5px 8px', textAlign: 'center',
+                borderRight: stage !== stagesInUse[stagesInUse.length - 1] ? '1px solid var(--surface-3)' : 'none',
+              }}>
+                {STAGE_SHORT[stage]}
+              </div>
+              {/* Partidos */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '6px 4px' }}>
+                {sm.map(m => {
+                  const res      = koResults[m.id];
+                  const hasRes   = res && res.h !== '';
+                  const myPred   = mePlayer?.knockoutScores?.[m.id];
+                  const hasPred  = myPred && myPred.h !== '';
+                  const pts      = hasRes && hasPred ? knockoutMatchPoints(myPred, res, m.mult, config.points) : null;
+                  const winnerT  = hasRes ? (+res.h > +res.a ? m.t1 : +res.a > +res.h ? m.t2 : null) : null;
+
+                  return (
+                    <div key={m.id} style={{
+                      background: 'var(--bg-deep)',
+                      border: '1px solid var(--surface-3)',
+                      padding: '6px 7px', fontSize: 11,
+                    }}>
+                      {/* Equipo local */}
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        fontWeight: 800,
+                        color: winnerT === m.t1 ? 'var(--accent)' : 'var(--text)',
+                        opacity: hasRes && winnerT !== m.t1 ? 0.5 : 1,
+                        marginBottom: 4,
+                      }}>
+                        <TeamFlag name={m.t1} size={14} />
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.t1}</span>
+                        {hasRes && <span style={{ fontFamily: 'var(--font-bebas)', fontSize: 15, color: 'var(--text)' }}>{res.h}</span>}
+                      </div>
+                      {/* Equipo visitante */}
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        fontWeight: 800,
+                        color: winnerT === m.t2 ? 'var(--accent)' : 'var(--text)',
+                        opacity: hasRes && winnerT !== m.t2 ? 0.5 : 1,
+                      }}>
+                        <TeamFlag name={m.t2} size={14} />
+                        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.t2}</span>
+                        {hasRes && <span style={{ fontFamily: 'var(--font-bebas)', fontSize: 15, color: 'var(--text)' }}>{res.a}</span>}
+                      </div>
+                      {/* Tu predicción */}
+                      {hasPred && (
+                        <div style={{
+                          marginTop: 5, paddingTop: 4,
+                          borderTop: '1px solid var(--surface-3)',
+                          fontSize: 10, color: pts > 0 ? 'var(--accent)' : 'var(--text-muted)',
+                          fontWeight: 700,
+                        }}>
+                          Tú: {myPred.h}-{myPred.a}{pts !== null ? ` · +${pts}pt` : ''}
+                        </div>
+                      )}
+                      {/* Multiplicador */}
+                      {m.mult > 1 && (
+                        <div style={{ marginTop: 3, fontSize: 9, color: 'var(--gold)', fontWeight: 900 }}>×{m.mult}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default function MatchesTab({ config, players, me }) {
   const hasKnockout = (config.knockoutMatches || []).length > 0;
   const [view, setView]         = useState('results');
   const [openMatch, setOpenMatch] = useState(null);
@@ -33,7 +127,10 @@ export default function MatchesTab({ config, players }) {
       <div className={styles.seg}>
         <button className={view === 'results'  ? styles.segActive : ''} onClick={() => setView('results')}>Grupos</button>
         {hasKnockout && (
-          <button className={view === 'knockout' ? styles.segActive : ''} onClick={() => setView('knockout')}>Eliminatorias</button>
+          <button className={view === 'knockout' ? styles.segActive : ''} onClick={() => setView('knockout')}>Resultados</button>
+        )}
+        {hasKnockout && (
+          <button className={view === 'bracket'  ? styles.segActive : ''} onClick={() => setView('bracket')}>Bracket</button>
         )}
         <button className={view === 'tables'   ? styles.segActive : ''} onClick={() => setView('tables')}>Tablas</button>
       </div>
@@ -100,6 +197,11 @@ export default function MatchesTab({ config, players }) {
           })}
         </div>
       ))}
+
+      {/* ── Bracket visual ── */}
+      {view === 'bracket' && hasKnockout && (
+        <KnockoutBracket config={config} players={players} me={me} />
+      )}
 
       {/* ── Tablas de grupos ── */}
       {view === 'tables' && GROUPS.map(g => {

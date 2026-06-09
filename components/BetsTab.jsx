@@ -1,28 +1,34 @@
 'use client';
 import { useState } from 'react';
 import { MATCHES, GROUPS } from '@/lib/data';
-import { fmtDate, isMatchLocked, matchPoints, defaultPicks } from '@/lib/scoring';
+import { fmtDate, isMatchLocked, matchPoints, knockoutMatchPoints, defaultPicks } from '@/lib/scoring';
+import { headToHead } from '@/lib/stats';
 import TeamFlag from './TeamFlag';
 import styles from './Tabs.module.css';
 import bets from './BetsTab.module.css';
 
+const STAGE_LABELS = {
+  LAST_16: '1/8', QUARTER_FINALS: '1/4', SEMI_FINALS: 'SF', FINAL: 'Final',
+};
+
 export default function BetsTab({ players, me, config, reactions, onReact }) {
   const list = Object.entries(players).sort((a, b) => a[1].name.localeCompare(b[1].name, 'es'));
   const [selected, setSelected] = useState(null);
-  const [phase, setPhase] = useState('scores');
+  const [phase, setPhase]       = useState('scores');
 
-  const player = selected ? players[selected] : null;
+  const player  = selected ? players[selected] : null;
+  const meData  = me ? players[me.id] : null;
+  const isOther = selected !== me?.id;
 
+  // ── Lista de jugadores ──
   if (!player) {
     return (
       <div className={styles.tabWrap}>
         <div className={styles.card}>
-          <h2 className={styles.cardTitle}>👀 Ver apuestas</h2>
+          <h2 className={styles.cardTitle}>Ver apuestas</h2>
           <p className={styles.hint}>Elige un jugador para ver sus predicciones.</p>
         </div>
-
         {list.length === 0 && <div className={styles.empty}>Aún no hay jugadores.</div>}
-
         <div className={bets.grid}>
           {list.map(([id, p]) => {
             const isMe = id === me?.id;
@@ -40,16 +46,19 @@ export default function BetsTab({ players, me, config, reactions, onReact }) {
     );
   }
 
-  const isOther = selected !== me?.id;
-  const scores = player.scores || {};
-  const groupPicks = player.groupPicks || {};
-  const tournament = player.tournament || {};
+  const scores      = player.scores      || {};
+  const groupPicks  = player.groupPicks  || {};
+  const tournament  = player.tournament  || {};
+  const koScores    = player.knockoutScores || {};
+  const hasKnockout = (config.knockoutMatches || []).length > 0;
 
-  // Cuenta reacciones por partido
   const reactionCount = (matchId) =>
     Object.values(reactions || {}).filter(r => r.to === selected && r.matchId === matchId).length;
   const iReacted = (matchId) =>
     !!(reactions || {})[`${me?.id}_${matchId}_${selected}`];
+
+  // ── Head-to-head data ──
+  const h2h = (isOther && meData) ? headToHead(meData, player, config) : null;
 
   return (
     <div className={styles.tabWrap}>
@@ -65,71 +74,60 @@ export default function BetsTab({ players, me, config, reactions, onReact }) {
 
       {/* Tabs */}
       <div className={styles.seg}>
-        <button className={phase === 'scores'  ? styles.segActive : ''} onClick={() => setPhase('scores')}>Resultados</button>
-        <button className={phase === 'groups'  ? styles.segActive : ''} onClick={() => setPhase('groups')}>Grupos</button>
-        <button className={phase === 'torneo'  ? styles.segActive : ''} onClick={() => setPhase('torneo')}>🌍 Torneo</button>
+        <button className={phase === 'scores'  ? styles.segActive : ''} onClick={() => setPhase('scores')}>Grupos</button>
+        {hasKnockout && (
+          <button className={phase === 'knockout' ? styles.segActive : ''} onClick={() => setPhase('knockout')}>Elim.</button>
+        )}
+        <button className={phase === 'groups'  ? styles.segActive : ''} onClick={() => setPhase('groups')}>Tabla</button>
+        <button className={phase === 'torneo'  ? styles.segActive : ''} onClick={() => setPhase('torneo')}>Torneo</button>
+        {isOther && h2h && h2h.total > 0 && (
+          <button className={phase === 'h2h' ? styles.segActive : ''} onClick={() => setPhase('h2h')}>VS Tú</button>
+        )}
       </div>
 
-      {/* Resultados */}
+      {/* ── Resultados grupos ── */}
       {phase === 'scores' && (
         <>
           {[1, 2, 3].map(md => (
             <div key={md}>
               <div className={styles.mdTitle}>Jornada {md}</div>
               {MATCHES.filter(m => m.md === md).map(m => {
-                const pred = scores[m.id] || { h: '', a: '' };
-                const res  = config.results?.[m.id];
-                const locked = isMatchLocked(m, config.locked);
+                const pred    = scores[m.id] || { h: '', a: '' };
+                const res     = config.results?.[m.id];
+                const locked  = isMatchLocked(m, config.locked);
                 const hasPred = pred.h !== '' && pred.a !== '';
-                const pts = res && hasPred ? matchPoints(pred, res, m.mult, config.points) : null;
-                const count = reactionCount(m.id);
+                const pts     = res && hasPred ? matchPoints(pred, res, m.mult, config.points) : null;
+                const count   = reactionCount(m.id);
                 const myReact = iReacted(m.id);
 
                 return (
                   <div key={m.id}>
                     <div className={`${styles.match} ${locked ? styles.locked : ''}`}>
-                      <div className={styles.team}>
-                        <TeamFlag name={m.t1} size={20} />
-                        <span className={styles.teamName}>{m.t1}</span>
-                      </div>
+                      <div className={styles.team}><TeamFlag name={m.t1} size={20} /><span className={styles.teamName}>{m.t1}</span></div>
                       <div className={bets.predScore}>
                         {hasPred
                           ? <span className={bets.scoreDisplay}>{pred.h} - {pred.a}</span>
-                          : <span className={bets.noPred}>{locked ? '—' : '?'}</span>
-                        }
+                          : <span className={bets.noPred}>{locked ? '—' : '?'}</span>}
                       </div>
-                      <div className={`${styles.team} ${styles.away}`}>
-                        <span className={styles.teamName}>{m.t2}</span>
-                        <TeamFlag name={m.t2} size={20} />
-                      </div>
+                      <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2}</span><TeamFlag name={m.t2} size={20} /></div>
                     </div>
-
                     <div className={styles.meta}>
                       {fmtDate(m.date)}
                       {m.mult > 1 && <span className={styles.badgeMult}>×{m.mult}</span>}
                       {locked && <span className={styles.badgeLock}>cerrado</span>}
-                      {res && (
-                        <>
-                          <span className={styles.resPill}>{res.h}-{res.a}</span>
-                          {pts != null && <span className={styles.badgePts}>+{pts}</span>}
-                        </>
-                      )}
+                      {res && <><span className={styles.resPill}>{res.h}-{res.a}</span>{pts != null && <span className={styles.badgePts}>+{pts}</span>}</>}
                       {!locked && !hasPred && <span className={bets.badgePending}>Sin rellenar</span>}
-
-                      {/* Reacción 😂 — en cualquier predicción ya rellenada de otro jugador */}
                       {isOther && hasPred && (
-                        <button
-                          className={`${bets.reactBtn} ${myReact ? bets.reactActive : ''}`}
-                          onClick={() => onReact(selected, m.id)}
-                          title={myReact ? 'Quitar reacción' : '¡Qué locura! 😂'}
-                        >
+                        <button className={`${bets.reactBtn} ${myReact ? bets.reactActive : ''}`}
+                          onClick={() => onReact(selected, m.id)}>
                           <img src="/icons/reaction-flipado.svg" alt="flipado" style={{ width: 18, height: 18, verticalAlign: 'middle' }} />
-                          {' '}{count > 0 && <span className={bets.reactCount}>{count}</span>}
+                          {count > 0 && <span className={bets.reactCount}>{count}</span>}
                         </button>
                       )}
-                      {/* Mostrar reacciones recibidas (sin poder reaccionar a las propias) */}
                       {!isOther && count > 0 && (
-                        <span className={bets.reactReceived}><img src="/icons/reaction-flipado.svg" alt="flipado" style={{ width: 14, height: 14, verticalAlign: 'middle' }} /> ×{count}</span>
+                        <span className={bets.reactReceived}>
+                          <img src="/icons/reaction-flipado.svg" alt="flipado" style={{ width: 14, height: 14, verticalAlign: 'middle' }} /> ×{count}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -140,7 +138,44 @@ export default function BetsTab({ players, me, config, reactions, onReact }) {
         </>
       )}
 
-      {/* Grupos */}
+      {/* ── Eliminatorias ── */}
+      {phase === 'knockout' && hasKnockout && (() => {
+        const stages = ['LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'FINAL'];
+        return stages.map(stage => {
+          const sm = (config.knockoutMatches || []).filter(m => m.stage === stage);
+          if (!sm.length) return null;
+          return (
+            <div key={stage}>
+              <div className={styles.mdTitle}>{STAGE_LABELS[stage]}</div>
+              {sm.map(m => {
+                const pred    = koScores[m.id] || { h: '', a: '' };
+                const res     = (config.knockoutResults || {})[m.id];
+                const hasPred = pred.h !== '' && pred.a !== '';
+                const ptsVal  = res && hasPred ? knockoutMatchPoints(pred, res, m.mult, config.points) : null;
+                return (
+                  <div key={m.id}>
+                    <div className={styles.match}>
+                      <div className={styles.team}><TeamFlag name={m.t1} size={20} /><span className={styles.teamName}>{m.t1}</span></div>
+                      <div className={bets.predScore}>
+                        {hasPred ? <span className={bets.scoreDisplay}>{pred.h} - {pred.a}</span>
+                          : <span className={bets.noPred}>—</span>}
+                      </div>
+                      <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2}</span><TeamFlag name={m.t2} size={20} /></div>
+                    </div>
+                    <div className={styles.meta}>
+                      {fmtDate(m.date)}
+                      {m.mult > 1 && <span className={styles.badgeMult}>×{m.mult}</span>}
+                      {res && <><span className={styles.resPill}>{res.h}-{res.a}</span>{ptsVal != null && <span className={styles.badgePts}>+{ptsVal}</span>}</>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        });
+      })()}
+
+      {/* ── Grupos ── */}
       {phase === 'groups' && (
         <div>
           <p className={styles.hint}>Clasificación de grupos según sus predicciones.</p>
@@ -162,19 +197,18 @@ export default function BetsTab({ players, me, config, reactions, onReact }) {
         </div>
       )}
 
-      {/* Torneo */}
+      {/* ── Torneo ── */}
       {phase === 'torneo' && (
         <div>
           <div className={styles.card}>
-            <h2 className={styles.cardTitle}>🏆 Ganadores</h2>
+            <h2 className={styles.cardTitle}>Ganadores</h2>
             <TRow label="Campeón" value={tournament.champion} />
             <TRow label="Subcampeón" value={tournament.runnerUp} />
             <TRow label="Equipo revelación" value={tournament.revelation} />
           </div>
-
           {(tournament.semis || []).length > 0 && (
             <div className={styles.card}>
-              <h2 className={styles.cardTitle}>🥈 Semifinalistas</h2>
+              <h2 className={styles.cardTitle}>Semifinalistas</h2>
               {(tournament.semis || []).map(t => (
                 <div key={t} className={bets.groupRow}>
                   <TeamFlag name={t} size={22} />
@@ -183,9 +217,8 @@ export default function BetsTab({ players, me, config, reactions, onReact }) {
               ))}
             </div>
           )}
-
           <div className={styles.card}>
-            <h2 className={styles.cardTitle}>🌟 Premios individuales</h2>
+            <h2 className={styles.cardTitle}>Premios individuales</h2>
             <TRow label="Bota de Oro" value={tournament.goldenBoot} />
             <TRow label="Guante de Oro" value={tournament.goldenGlove} />
             <TRow label="MVP del torneo" value={tournament.mvp} />
@@ -193,18 +226,98 @@ export default function BetsTab({ players, me, config, reactions, onReact }) {
         </div>
       )}
 
+      {/* ── Head to Head ── */}
+      {phase === 'h2h' && isOther && h2h && (
+        <HeadToHead h2h={h2h} nameA={meData?.name || 'Tú'} nameB={player.name} />
+      )}
+
       <div style={{ height: 72 }} />
+    </div>
+  );
+}
+
+/* ── Componente Head to Head ── */
+function HeadToHead({ h2h, nameA, nameB }) {
+  const { winsA, winsB, draws, total, last5, streak, streakWinner, matchRows } = h2h;
+  const streakName = streakWinner === 'A' ? nameA : streakWinner === 'B' ? nameB : null;
+
+  return (
+    <div>
+      {/* Marcador global */}
+      <div className={bets.h2hBoard}>
+        <div className={bets.h2hPlayer}>
+          <span className={bets.h2hAvatar}>{nameA[0]}</span>
+          <span className={bets.h2hName}>{nameA}</span>
+          <span className={bets.h2hScore} style={{ color: winsA > winsB ? 'var(--accent)' : 'var(--text-muted)' }}>{winsA}</span>
+        </div>
+        <div className={bets.h2hMiddle}>
+          <span className={bets.h2hDraws}>{draws}D</span>
+          <span className={bets.h2hOf}>{total} partidos</span>
+        </div>
+        <div className={`${bets.h2hPlayer} ${bets.h2hRight}`}>
+          <span className={bets.h2hScore} style={{ color: winsB > winsA ? 'var(--accent)' : 'var(--text-muted)' }}>{winsB}</span>
+          <span className={bets.h2hName}>{nameB}</span>
+          <span className={bets.h2hAvatar}>{nameB[0]}</span>
+        </div>
+      </div>
+
+      {/* Racha actual */}
+      {streak > 1 && streakName && (
+        <div className={bets.h2hStreak}>
+          {streakName === nameA ? '🔥' : '😤'} {streakName} lleva <strong>{streak}</strong> seguidos ganando
+        </div>
+      )}
+
+      {/* Últimos 5 */}
+      {last5.length > 0 && (
+        <div className={styles.card} style={{ marginTop: 12 }}>
+          <div className={styles.cardTitle}>Últimos {last5.length} partidos</div>
+          <div className={bets.last5}>
+            {last5.map((r, i) => (
+              <div key={i} className={`${bets.last5pill} ${r === 'A' ? bets.l5win : r === 'B' ? bets.l5loss : bets.l5draw}`}>
+                {r === 'A' ? 'G' : r === 'B' ? 'P' : 'E'}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Partido a partido */}
+      {matchRows.length > 0 && (
+        <div className={styles.card} style={{ marginTop: 12 }}>
+          <div className={styles.cardTitle}>Partido a partido</div>
+          {matchRows.map(({ m, predA, predB, res, ptsA, ptsB, winner }, i) => (
+            <div key={i} className={bets.h2hMatchRow}>
+              <div className={bets.h2hMatchTeams}>
+                <TeamFlag name={m.t1} size={14} />
+                <span style={{ fontSize: 11, fontWeight: 700 }}>{m.t1} vs {m.t2}</span>
+                <TeamFlag name={m.t2} size={14} />
+              </div>
+              <div className={bets.h2hMatchPreds}>
+                <span className={`${bets.h2hPred} ${winner === 'A' ? bets.h2hWinPred : ''}`}>
+                  {predA?.h !== '' ? `${predA.h}-${predA.a}` : '—'}
+                  {ptsA > 0 && <span className={bets.h2hPredPts}>+{ptsA}</span>}
+                </span>
+                <span className={bets.h2hVs}>vs</span>
+                <span className={`${bets.h2hPred} ${winner === 'B' ? bets.h2hWinPred : ''}`}>
+                  {predB?.h !== '' ? `${predB.h}-${predB.a}` : '—'}
+                  {ptsB > 0 && <span className={bets.h2hPredPts}>+{ptsB}</span>}
+                </span>
+              </div>
+              {res && <div className={bets.h2hResult}>{res.h}-{res.a}</div>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function TRow({ label, value }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 4px', borderBottom: '1px solid #f0ecfa' }}>
-      <span style={{ fontWeight: 700, color: '#7a7266', fontSize: 14 }}>{label}</span>
-      <span style={{ fontWeight: 800, color: value ? '#2d2540' : '#c5b8e8', fontSize: 14 }}>
-        {value || '—'}
-      </span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 4px', borderBottom: '1px solid var(--surface-3)' }}>
+      <span style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: 14 }}>{label}</span>
+      <span style={{ fontWeight: 800, color: value ? 'var(--text)' : 'var(--surface-3)', fontSize: 14 }}>{value || '—'}</span>
     </div>
   );
 }

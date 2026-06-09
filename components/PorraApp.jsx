@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { slugify, autoGroupPicks, getDeadline, getKnockoutDeadline } from '@/lib/scoring';
+import { slugify, autoGroupPicks, getDeadline, getKnockoutDeadline, playerScore } from '@/lib/scoring';
 import { createStore, normalizeConfig } from '@/lib/store';
 import { GROUPS, MATCHES } from '@/lib/data';
 import PredictTab from './PredictTab';
@@ -63,6 +63,7 @@ export default function PorraApp() {
   const [reactionNote, setReactionNote] = useState('');
   const lastSeenRef    = useRef(0);
   const reminderTimers = useRef([]);
+  const myRankRef      = useRef(null); // posición anterior en el ranking
 
   // Inicializar lastSeen desde localStorage (solo en cliente)
   useEffect(() => {
@@ -78,6 +79,37 @@ export default function PorraApp() {
     navigator.serviceWorker.addEventListener('message', handler);
     return () => navigator.serviceWorker.removeEventListener('message', handler);
   }, []);
+
+  // ── Detectar cuando alguien te adelanta en el ranking ──────────
+  useEffect(() => {
+    if (!me || Object.keys(players).length === 0) return;
+    const ranking = Object.entries(players)
+      .map(([id, p]) => ({ id, total: playerScore(p, config).total }))
+      .sort((a, b) => b.total - a.total);
+    const myPos = ranking.findIndex(r => r.id === me.id);
+    if (myPos === -1) return;
+    const prevPos = myRankRef.current;
+    if (prevPos !== null && myPos > prevPos) {
+      // Alguien nos ha adelantado
+      const who = ranking[myPos - 1];
+      const whoName = players[who?.id]?.name || 'Alguien';
+      setReactionNote(`${whoName} te ha adelantado en el ranking`);
+      setTimeout(() => setReactionNote(''), 6000);
+      // Push notification si la app está en segundo plano
+      if ('serviceWorker' in navigator && Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(`${whoName} te ha adelantado`, {
+            body: 'Revisa el ranking y remonta en la Porra 2026',
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-192.png',
+            tag: 'rank_change',
+            data: { url: '/' },
+          });
+        }).catch(() => {});
+      }
+    }
+    myRankRef.current = myPos;
+  }, [players, config, me?.id]);
 
   // ── Recordatorios 1h antes del cierre de apuesta ──────────────
   useEffect(() => {
@@ -297,7 +329,7 @@ export default function PorraApp() {
         {tab === 'predict' && <PredictTab me={meWithLatest} config={config} onSave={savePlayer} />}
         {tab === 'ranking' && <RankingTab players={players} me={me} config={config} />}
         {tab === 'bets'    && <BetsTab players={players} me={me} config={config} reactions={reactions} onReact={handleReact} />}
-        {tab === 'matches' && <MatchesTab config={config} players={players} />}
+        {tab === 'matches' && <MatchesTab config={config} players={players} me={meWithLatest} />}
         {tab === 'admin'   && <AdminTab config={config} onSaveConfig={saveConfig} />}
       </main>
 
