@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { MATCHES, GROUPS, TEAMS } from '@/lib/data';
 import {
   fmtDate, isMatchLocked, matchPoints, standings,
@@ -231,11 +231,7 @@ export default function PredictTab({ me, config, onSave }) {
       {/* ── Torneo ── */}
       {phase === 'torneo' && (
         <div>
-          {config.tournamentLocked && (
-            <div className={styles.lockedBanner}>
-              Apuestas de torneo cerradas — los grupos han terminado
-            </div>
-          )}
+          <TournamentDeadlineBanner config={config} />
           <p className={styles.hint}>Predicciones de la fase final del torneo.</p>
 
           <div className={styles.card}>
@@ -299,6 +295,83 @@ export default function PredictTab({ me, config, onSave }) {
           <button className={styles.btn} onClick={save}>Guardar mi porrita</button>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Banner de deadline del Torneo ── */
+function TournamentDeadlineBanner({ config }) {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30_000); // refresca cada 30s
+    return () => clearInterval(t);
+  }, []);
+
+  if (config.tournamentLocked) {
+    return (
+      <div className={styles.lockedBanner}>
+        Apuestas cerradas — los Dieciseisavos han terminado
+      </div>
+    );
+  }
+
+  // Buscar el último partido de dieciseisavos para calcular el cierre
+  const r16 = (config.knockoutMatches || []).filter(m => m.stage === 'LAST_16');
+
+  if (r16.length === 0) {
+    // Los 1/8 aún no están definidos
+    return (
+      <div className={styles.tournamentOpenBanner}>
+        <span className={styles.tournamentOpenDot} />
+        Abierto hasta que terminen los Dieciseisavos de Final
+      </div>
+    );
+  }
+
+  // Deadline = último partido de 1/8 (asumimos que cuando acaba, se cierra)
+  const lastR16 = r16
+    .filter(m => m.datetime)
+    .sort((a, b) => new Date(b.datetime) - new Date(a.datetime))[0];
+
+  if (!lastR16) {
+    return (
+      <div className={styles.tournamentOpenBanner}>
+        <span className={styles.tournamentOpenDot} />
+        Abierto hasta el final de los Dieciseisavos
+      </div>
+    );
+  }
+
+  const deadline = new Date(lastR16.datetime);
+  const diff     = deadline - now;
+
+  if (diff <= 0) {
+    // Todavía no bloqueado por Firestore pero el último 1/8 ya empezó
+    return (
+      <div className={styles.lockedBanner}>
+        Apuestas cerradas — pendiente de confirmación de resultados
+      </div>
+    );
+  }
+
+  const days  = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins  = Math.floor((diff % 3600000) / 60000);
+  const urgent = diff < 86400000 * 2; // < 2 días
+
+  let timeStr;
+  if (days > 0)       timeStr = `${days}d ${hours}h`;
+  else if (hours > 0) timeStr = `${hours}h ${mins}m`;
+  else                timeStr = `${mins}m`;
+
+  return (
+    <div className={`${styles.tournamentCountdownBanner} ${urgent ? styles.tournamentUrgent : ''}`}>
+      <div className={styles.tournamentCountdownLabel}>Las apuestas de Torneo cierran en</div>
+      <div className={styles.tournamentCountdownTime}>{timeStr}</div>
+      <div className={styles.tournamentCountdownSub}>
+        Cierra cuando terminen los Dieciseisavos
+      </div>
     </div>
   );
 }

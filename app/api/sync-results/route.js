@@ -241,15 +241,8 @@ export async function GET() {
       }
     }
 
-    // ── 2. Auto-lock tournament when all group matches done ─────
-    const allGroupsDone = OUR_MATCHES.every(m => {
-      const r = currentResults[m.id];
-      return r && r.h !== '' && r.a !== '';
-    });
-    if (allGroupsDone && !tournamentLocked) {
-      await setTournamentLocked();
-      summary.tournamentLocked = true;
-    }
+    // ── 2. Auto-lock tournament when all Round of 16 matches done ─
+    // (evaluated after knockout loop, see below)
 
     // ── 3. Knockout stages: fixtures + results ──────────────────
     let knockoutMatchesCopy = [...currentKOMatches];
@@ -310,6 +303,17 @@ export async function GET() {
 
     if (fixturesChanged) {
       await saveKnockoutMatches(knockoutMatchesCopy);
+    }
+
+    // ── 4. Auto-lock tournament when ALL Round of 16 matches finished ──
+    const r16Matches = knockoutMatchesCopy.filter(m => m.stage === 'LAST_16');
+    const allR16Done = r16Matches.length > 0 && r16Matches.every(m => {
+      const r = currentKOResults[m.id];
+      return r && r.h !== '' && r.a !== '';
+    });
+    if (allR16Done && !tournamentLocked) {
+      await setTournamentLocked();
+      summary.tournamentLocked = true;
     }
 
     return Response.json({ ok: true, summary });
