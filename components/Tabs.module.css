@@ -436,3 +436,22 @@
   letter-spacing: 0.05em;
 }
 .bdPtsPos { color: var(--green); }
+
+/* ── Knockout countdown styles ── */
+.urgentRed    { color: #EF4444; font-size: 11px; font-weight: 800; }
+.urgentOrange { color: var(--accent); font-size: 11px; font-weight: 800; }
+.countdownNorm{ color: var(--text-muted); font-size: 11px; font-weight: 600; }
+
+/* ── Tournament locked banner ── */
+.lockedBanner {
+  background: #1c1005;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}

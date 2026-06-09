@@ -155,11 +155,18 @@ export default function PorraApp() {
     return null;
   }, [store, players]);
 
-  const savePlayer = useCallback(async ({ scores, groupPicks, tournament }) => {
+  const savePlayer = useCallback(async ({ scores, groupPicks, tournament, knockoutScores }) => {
     if (!me || !store) return;
-    const updated = { ...me, scores, groupPicks, tournament };
+    const updated = { ...me, scores, groupPicks, tournament, knockoutScores };
     setMe(updated);
-    await store.savePlayer(me.id, { name: me.name, pin: me.pin || '', scores, groupPicks, tournament: tournament || {} });
+    await store.savePlayer(me.id, {
+      name: me.name,
+      pin: me.pin || '',
+      scores,
+      groupPicks,
+      tournament:     tournament     || {},
+      knockoutScores: knockoutScores || {},
+    });
   }, [me, store]);
 
   const saveConfig = useCallback(async (newConfig) => {
