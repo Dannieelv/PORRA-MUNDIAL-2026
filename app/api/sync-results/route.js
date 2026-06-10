@@ -180,6 +180,91 @@ async function setTournamentLocked() {
   });
 }
 
+// ── Multi-group helpers ──────────────────────────────────────────
+
+async function getAllGroupIds() {
+  try {
+    const res = await fetch(`${FIRESTORE_URL}/groups${KEY}`);
+    if (!res.ok) return [];
+    const body = await res.json();
+    return (body.documents || []).map(d => d.name.split('/').pop());
+  } catch { return []; }
+}
+
+async function propagateResultToGroups(groupIds, matchId, h, a) {
+  for (const gId of groupIds) {
+    const url = `${FIRESTORE_URL}/groups/${gId}/settings/config?key=${FIREBASE_API_KEY}&updateMask.fieldPaths=results.${matchId}`;
+    await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fields: {
+          results: { mapValue: { fields: {
+            [matchId]: { mapValue: { fields: {
+              h: { integerValue: String(h) },
+              a: { integerValue: String(a) },
+            }}}
+          }}}
+        }
+      }),
+    }).catch(() => {});
+  }
+}
+
+async function propagateKnockoutMatchesToGroups(groupIds, matches) {
+  const body = JSON.stringify({
+    fields: {
+      knockoutMatches: {
+        arrayValue: {
+          values: matches.map(m => ({
+            mapValue: { fields: {
+              id:       { stringValue: m.id },
+              stage:    { stringValue: m.stage },
+              mult:     { integerValue: String(m.mult) },
+              t1:       { stringValue: m.t1 },
+              t2:       { stringValue: m.t2 },
+              date:     { stringValue: m.date },
+              datetime: { stringValue: m.datetime },
+            }}
+          }))
+        }
+      }
+    }
+  });
+  for (const gId of groupIds) {
+    const url = `${FIRESTORE_URL}/groups/${gId}/settings/config?key=${FIREBASE_API_KEY}&updateMask.fieldPaths=knockoutMatches`;
+    await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body }).catch(() => {});
+  }
+}
+
+async function propagateKnockoutResultToGroups(groupIds, matchId, h, a) {
+  for (const gId of groupIds) {
+    const url = `${FIRESTORE_URL}/groups/${gId}/settings/config?key=${FIREBASE_API_KEY}&updateMask.fieldPaths=knockoutResults.${matchId}`;
+    await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fields: {
+          knockoutResults: { mapValue: { fields: {
+            [matchId]: { mapValue: { fields: {
+              h: { integerValue: String(h) },
+              a: { integerValue: String(a) },
+            }}}
+          }}}
+        }
+      }),
+    }).catch(() => {});
+  }
+}
+
+async function propagateTournamentLockedToGroups(groupIds) {
+  const body = JSON.stringify({ fields: { tournamentLocked: { booleanValue: true } } });
+  for (const gId of groupIds) {
+    const url = `${FIRESTORE_URL}/groups/${gId}/settings/config?key=${FIREBASE_API_KEY}&updateMask.fieldPaths=tournamentLocked`;
+    await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body }).catch(() => {});
+  }
+}
+
 async function notifyAll(payload) {
   try {
     const base = process.env.NEXT_PUBLIC_SITE_URL
@@ -206,10 +291,14 @@ export async function GET() {
     const currentKOResults = cfg?.knockoutResults  || {};
     const tournamentLocked = cfg?.tournamentLocked || false;
 
+    // Fetch all multi-tenant group IDs for propagation
+    const allGroupIds = await getAllGroupIds();
+
     const summary = {
       groupsUpdated:         [],
       knockoutFixturesAdded: [],
       knockoutResultsAdded:  [],
+      propagatedToGroups:    allGroupIds.length,
     };
 
     // ── 1. Group stage results ──────────────────────────────────
@@ -230,6 +319,7 @@ export async function GET() {
         const existing = currentResults[ourMatch.id];
         if (!existing || String(existing.h) !== String(h) || String(existing.a) !== String(a)) {
           await saveGroupResult(ourMatch.id, h, a);
+          await propagateResultToGroups(allGroupIds, ourMatch.id, h, a);
           await notifyAll({
             title: `Resultado: ${home} ${h}-${a} ${away}`,
             body: 'Comprueba tus puntos en la Porra Mundial 2026',
@@ -290,6 +380,7 @@ export async function GET() {
           const existingResult = currentKOResults[matchId];
           if (!existingResult || String(existingResult.h) !== String(h) || String(existingResult.a) !== String(a)) {
             await saveKnockoutResult(matchId, h, a);
+            await propagateKnockoutResultToGroups(allGroupIds, matchId, h, a);
             await notifyAll({
               title: `${label}: ${t1} ${h}-${a} ${t2}`,
               body: 'Comprueba tus puntos en la Porra Mundial 2026',
@@ -303,6 +394,7 @@ export async function GET() {
 
     if (fixturesChanged) {
       await saveKnockoutMatches(knockoutMatchesCopy);
+      await propagateKnockoutMatchesToGroups(allGroupIds, knockoutMatchesCopy);
     }
 
     // ── 4. Auto-lock tournament when ALL Round of 16 matches finished ──
@@ -313,6 +405,7 @@ export async function GET() {
     });
     if (allR16Done && !tournamentLocked) {
       await setTournamentLocked();
+      await propagateTournamentLockedToGroups(allGroupIds);
       summary.tournamentLocked = true;
     }
 

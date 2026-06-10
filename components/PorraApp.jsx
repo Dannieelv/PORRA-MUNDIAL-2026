@@ -50,7 +50,7 @@ const TABS = [
   { id: 'admin',   label: 'Admin',      icon: '/icons/tab-admin.svg' },
 ];
 
-export default function PorraApp() {
+export default function PorraApp({ groupId = null }) {
   const [store, setStore]       = useState(null);
   const [config, setConfig]     = useState(normalizeConfig());
   const [players, setPlayers]   = useState({});
@@ -177,7 +177,7 @@ export default function PorraApp() {
 
   // Init store
   useEffect(() => {
-    createStore().then(s => {
+    createStore(groupId).then(s => {
       setStore(s);
       if (s.type === 'local') {
         setBanner({ msg: 'Modo LOCAL · Configura Firebase para compartir con todos', kind: 'warn' });
@@ -186,6 +186,7 @@ export default function PorraApp() {
         setBanner({ msg: '☁️ Conectado · datos en tiempo real', kind: 'ok' });
         setTimeout(() => setBanner({ msg: '', kind: '' }), 3000);
       }
+      if (groupId) localStorage.setItem('porra_group', groupId);
       const unsub = s.subscribe(({ config: c, players: p, reactions: r }) => {
         setConfig(normalizeConfig(c));
         setPlayers(p);
@@ -316,6 +317,15 @@ export default function PorraApp() {
         </div>
         <div className={styles.who}>
           <span className={styles.whoName}>{me.name}</span>
+          {groupId && (
+            <button className={styles.infoBtn} onClick={() => {
+              localStorage.removeItem('porra_group');
+              localStorage.removeItem('porra_me');
+              window.location.href = '/';
+            }} title="Cambiar grupo" aria-label="Cambiar grupo" style={{ marginRight: 4 }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 1H13V5M13 1L7 7M6 2H2C1.45 2 1 2.45 1 3V12C1 12.55 1.45 13 2 13H11C11.55 13 12 12.55 12 12V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          )}
           <button className={styles.infoBtn} onClick={() => setShowScore(true)} title="Ver puntuación" aria-label="Ver reglas de puntuación">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="7" width="3" height="8" fill="currentColor"/><rect x="6" y="4" width="3" height="11" fill="currentColor"/><rect x="11" y="1" width="3" height="14" fill="currentColor"/></svg>
           </button>
