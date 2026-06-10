@@ -189,6 +189,8 @@ function StatBox({ label, value, sub, accent, warn }) {
 /* ── Desglose completo de puntos ── */
 function Breakdown({ player, config, onClose, isMe }) {
   const [view, setView] = useState('puntos');
+  if (!player) return null;
+
   const results   = config?.results         || {};
   const koResults = config?.knockoutResults || {};
   const koMatches = config?.knockoutMatches || [];
@@ -196,14 +198,14 @@ function Breakdown({ player, config, onClose, isMe }) {
   const trResult  = config?.tournament      || {};
 
   const matchRows = MATCHES.map(m => {
-    const pred = player.scores?.[m.id];
+    const pred = player?.scores?.[m.id];
     const res  = results[m.id];
     const pts  = matchPoints(pred, res, m.mult, points);
     return { m, pred, res, pts };
   }).filter(r => r.pred || r.res);
 
   const koRows = koMatches.map(m => {
-    const pred = player.knockoutScores?.[m.id];
+    const pred = player?.knockoutScores?.[m.id];
     const res  = koResults[m.id];
     const pts  = knockoutMatchPoints(pred, res, m.mult, points);
     return { m, pred, res, pts };
@@ -339,10 +341,16 @@ export default function RankingTab({ players, me, config }) {
   const medals = ['gold', 'silver', 'bronze'];
 
   if (detail) {
+    const detailPlayer = players[detail];
+    if (!detailPlayer) {
+      // Race condition: player desapareció, volvemos al listado
+      setTimeout(() => setDetail(null), 0);
+      return null;
+    }
     return (
       <div className={styles.tabWrap}>
         <Breakdown
-          player={players[detail]}
+          player={detailPlayer}
           config={config}
           onClose={() => setDetail(null)}
           isMe={detail === me?.id}
