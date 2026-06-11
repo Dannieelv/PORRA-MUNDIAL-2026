@@ -472,12 +472,17 @@ export default function RankingTab({ players, me, config }) {
 
   if (detail) {
     const detailPlayer = players[detail];
-    if (!detailPlayer) { setTimeout(() => setDetail(null), 0); return null; }
-    return (
-      <div className={styles.tabWrap}>
-        <Breakdown player={detailPlayer} config={config} onClose={() => setDetail(null)} allPlayers={players} />
-      </div>
-    );
+    if (!detailPlayer) {
+      // Player not found in current snapshot (Firestore race) — clear detail immediately
+      setDetail(null);
+      // Don't return null; fall through to render the list below
+    } else {
+      return (
+        <div className={styles.tabWrap}>
+          <Breakdown player={detailPlayer} config={config} onClose={() => setDetail(null)} allPlayers={players} />
+        </div>
+      );
+    }
   }
 
   return (
