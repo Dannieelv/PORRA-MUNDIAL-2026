@@ -338,9 +338,9 @@ function Breakdown({ player, config, onClose, allPlayers }) {
                     <span className={styles.bdScore}>{pred ? `${pred.h}-${pred.a}` : '—'}</span>
                     <TeamFlag name={m.t2} size={14} />
                   </div>
-                  {res?.h !== '' && <span className={styles.bdRes}>{res.h}-{res.a}</span>}
-                  <div className={`${styles.bdPts} ${res && pts > 0 ? styles.bdPtsPos : ''}`}>
-                    {res?.h !== '' ? `+${pts}` : '—'}
+                  {res?.h != null && res.h !== '' && <span className={styles.bdRes}>{res.h}-{res.a}</span>}
+                  <div className={`${styles.bdPts} ${res?.h != null && res.h !== '' && pts > 0 ? styles.bdPtsPos : ''}`}>
+                    {res?.h != null && res.h !== '' ? `+${pts}` : '—'}
                   </div>
                 </div>
               ))}
@@ -360,9 +360,9 @@ function Breakdown({ player, config, onClose, allPlayers }) {
                     </span>
                     <TeamFlag name={m.t2} size={14} />
                   </div>
-                  {res?.h !== '' && <span className={styles.bdRes}>{res.h}-{res.a}</span>}
-                  <div className={`${styles.bdPts} ${res && pts > 0 ? styles.bdPtsPos : ''}`}>
-                    {res?.h !== '' ? `+${pts}` : '—'}
+                  {res?.h != null && res.h !== '' && <span className={styles.bdRes}>{res.h}-{res.a}</span>}
+                  <div className={`${styles.bdPts} ${res?.h != null && res.h !== '' && pts > 0 ? styles.bdPtsPos : ''}`}>
+                    {res?.h != null && res.h !== '' ? `+${pts}` : '—'}
                   </div>
                 </div>
               ))}
