@@ -80,7 +80,7 @@ export default function BetsTab({ players, me, config, reactions, onReact }) {
         )}
         <button className={phase === 'groups'  ? styles.segActive : ''} onClick={() => setPhase('groups')}>Tabla</button>
         <button className={phase === 'torneo'  ? styles.segActive : ''} onClick={() => setPhase('torneo')}>Torneo</button>
-        {isOther && h2h && h2h.total > 0 && (
+        {isOther && (
           <button className={phase === 'h2h' ? styles.segActive : ''} onClick={() => setPhase('h2h')}>VS Tú</button>
         )}
       </div>
@@ -227,8 +227,20 @@ export default function BetsTab({ players, me, config, reactions, onReact }) {
       )}
 
       {/* ── Head to Head ── */}
-      {phase === 'h2h' && isOther && h2h && (
-        <HeadToHead h2h={h2h} nameA={meData?.name || 'Tú'} nameB={player.name} />
+      {phase === 'h2h' && isOther && (
+        h2h && h2h.total > 0
+          ? <HeadToHead h2h={h2h} nameA={meData?.name || 'Tú'} nameB={player.name} />
+          : (
+            <div className={styles.card} style={{ marginTop: 12, textAlign: 'center', padding: '32px 16px' }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>⚔️</div>
+              <div style={{ fontFamily: 'var(--font-bebas)', fontSize: 22, letterSpacing: '0.06em', color: 'var(--text)', marginBottom: 8 }}>
+                TÚ VS {(player.name || '').toUpperCase()}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>
+                El duelo empezará en cuanto haya partidos con resultado.
+              </div>
+            </div>
+          )
       )}
 
       <div style={{ height: 72 }} />
