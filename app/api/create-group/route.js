@@ -18,6 +18,19 @@ export async function POST(req) {
       return Response.json({ error: 'Nombre demasiado corto' }, { status: 400 });
     }
 
+    // Comprobar que no existe ya un grupo con el mismo nombre (case-insensitive)
+    const listRes = await fetch(`${FIRESTORE_URL}/groups${KEY}`);
+    if (listRes.ok) {
+      const listBody = await listRes.json();
+      const existing = (listBody.documents || []).some(doc => {
+        const n = doc.fields?.name?.stringValue || '';
+        return n.trim().toLowerCase() === name.trim().toLowerCase();
+      });
+      if (existing) {
+        return Response.json({ error: 'Ya existe un grupo con ese nombre. Elige otro.' }, { status: 409 });
+      }
+    }
+
     const groupId = slugify(name.trim()) + '-' + rand(6);
 
     // Crear metadata del grupo en Firestore

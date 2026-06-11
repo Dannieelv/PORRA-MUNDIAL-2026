@@ -47,6 +47,26 @@ export default function AdminTab({ config, onSaveConfig }) {
     showToast('Guardado ✓');
   };
 
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const res  = await fetch('/api/sync-results');
+      const data = await res.json();
+      if (data.ok) {
+        const updated = data.summary?.groupsUpdated?.length || 0;
+        const ko      = data.summary?.knockoutFixturesAdded?.length || 0;
+        showToast(updated + ko > 0
+          ? `Sync OK · ${updated} resultados, ${ko} fixtures KO`
+          : 'Sync OK · Sin cambios nuevos');
+      } else {
+        showToast('Error en sync: ' + (data.error || 'desconocido'));
+      }
+    } catch { showToast('Error al sincronizar'); }
+    setSyncing(false);
+  };
+
   const notifyResult = async (matchId) => {
     const m = MATCHES.find(x => x.id === matchId);
     const r = results[matchId];
@@ -84,6 +104,10 @@ export default function AdminTab({ config, onSaveConfig }) {
   return (
     <div className={styles.tabWrap}>
       {toast && <div className={`${styles.toast} ${styles.toastOk}`}>{toast}</div>}
+
+      <button className={styles.syncBtn} onClick={handleSync} disabled={syncing}>
+        {syncing ? '⏳ Sincronizando…' : '🔄 Sincronizar resultados ahora'}
+      </button>
 
       <div className={styles.seg}>
         <button className={section === 'results' ? styles.segActive : ''} onClick={() => setSection('results')}>Resultados</button>

@@ -61,19 +61,21 @@
 }
 
 .logo {
-  width: 52px;
-  height: 52px;
-  margin-bottom: 16px;
+  width: clamp(36px, 10vw, 52px);
+  height: clamp(36px, 10vw, 52px);
+  margin-bottom: clamp(10px, 3vw, 16px);
   display: block;
 }
 
 .title {
   font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
-  font-size: clamp(64px, 18vw, 96px);
+  font-size: clamp(52px, 20vw, 96px);
   line-height: 0.88;
   letter-spacing: -0.01em;
   color: #fff;
-  margin: 0 0 16px;
+  margin: 0 0 clamp(10px, 3vw, 16px);
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
 .title span {
@@ -82,7 +84,7 @@
 
 .sub {
   font-family: var(--font-barlow), sans-serif;
-  font-size: 14px;
+  font-size: clamp(11px, 3vw, 14px);
   font-weight: 600;
   color: #666;
   letter-spacing: 0.06em;
@@ -91,103 +93,64 @@
   margin: 0;
 }
 
-/* Action cards */
-.actions {
+/* Two-column layout */
+.twoCol {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
-.cta {
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: #111;
+  border: 2px solid #1e1e1e;
+}
+
+.card:first-child { border-bottom: none; }
+
+.cardLabel {
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.btn {
+  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  padding: 12px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  transition: background .12s, transform .08s;
+}
+
+.btn:active { transform: scale(0.99); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnPrimary { background: var(--accent, #EA580B); color: #fff; }
+.btnPrimary:hover:not(:disabled) { background: #c2450a; }
+
+.btnSecondary { background: #1e1e1e; color: #fff; border: 2px solid #2a2a2a; }
+.btnSecondary:hover { background: #252525; border-color: #3a3a3a; }
+
+.divider {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-  border: 2px solid transparent;
-  cursor: pointer;
-  text-align: left;
-  transition: border-color .12s, background .12s, transform .08s;
-}
-
-.cta:active { transform: scale(0.98); }
-
-.ctaPrimary {
-  background: var(--accent, #EA580B);
-  color: #fff;
-}
-
-.ctaPrimary:hover { background: #c2450a; }
-
-.ctaSecondary {
-  background: #111;
-  border-color: #2a2a2a;
-  color: #fff;
-}
-
-.ctaSecondary:hover { border-color: #444; background: #161616; }
-
-.ctaIcon {
-  font-size: 28px;
+  justify-content: center;
+  font-size: 11px;
   font-weight: 900;
-  line-height: 1;
-  flex-shrink: 0;
-  width: 36px;
-  text-align: center;
-}
-
-.ctaLabel {
-  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
-  font-size: 22px;
-  letter-spacing: 0.06em;
-  line-height: 1;
-  margin-bottom: 3px;
-}
-
-.ctaHint {
-  font-size: 12px;
-  font-weight: 600;
-  opacity: 0.7;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* Form */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.back {
-  background: none;
-  border: none;
-  color: #555;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-  width: fit-content;
-}
-
-.back:hover { color: #888; }
-
-.formTitle {
-  font-family: var(--font-bebas), 'Bebas Neue', sans-serif;
-  font-size: 36px;
-  letter-spacing: 0.06em;
-  color: #fff;
-  margin: 0;
-}
-
-.formHint {
-  font-size: 13px;
-  color: #555;
-  font-weight: 600;
-  margin: 0;
-  line-height: 1.4;
+  letter-spacing: 0.15em;
+  color: #333;
+  padding: 10px 0;
+  border-left: 2px solid #1e1e1e;
+  border-right: 2px solid #1e1e1e;
+  background: #0d0d0d;
 }
 
 .input {
@@ -230,6 +193,28 @@
 .submit:hover { background: #c2450a; }
 .submit:active { transform: scale(0.99); }
 .submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Share button */
+.shareBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  background: #075e54;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-barlow), sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background .12s, transform .08s;
+}
+.shareBtn:hover { background: #054d45; }
+.shareBtn:active { transform: scale(0.99); }
 
 /* Features strip */
 .features {

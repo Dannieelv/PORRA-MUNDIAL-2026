@@ -51,6 +51,9 @@ const TABS = [
 ];
 
 export default function PorraApp({ groupId = null }) {
+  // Clave de localStorage para el jugador actual (por grupo cuando existe)
+  const meKey = groupId ? `porra_me_${groupId}` : 'porra_me';
+
   const [store, setStore]       = useState(null);
   const [config, setConfig]     = useState(normalizeConfig());
   const [players, setPlayers]   = useState({});
@@ -61,13 +64,18 @@ export default function PorraApp({ groupId = null }) {
   const [showScore, setShowScore]     = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [reactionNote, setReactionNote] = useState('');
+  const [groupName, setGroupName] = useState('');
   const lastSeenRef    = useRef(0);
   const reminderTimers = useRef([]);
   const myRankRef      = useRef(null); // posición anterior en el ranking
 
-  // Inicializar lastSeen desde localStorage (solo en cliente)
+  // Inicializar lastSeen y nombre del grupo desde localStorage (solo en cliente)
   useEffect(() => {
     lastSeenRef.current = +(localStorage.getItem('porra_reactions_seen') || 0);
+    if (groupId) {
+      const stored = localStorage.getItem(`porra_group_name_${groupId}`);
+      setGroupName(stored || groupId);
+    }
   }, []);
 
   // Escuchar SW_UPDATED y recargar para aplicar el nuevo service worker
@@ -186,7 +194,17 @@ export default function PorraApp({ groupId = null }) {
         setBanner({ msg: '☁️ Conectado · datos en tiempo real', kind: 'ok' });
         setTimeout(() => setBanner({ msg: '', kind: '' }), 3000);
       }
-      if (groupId) localStorage.setItem('porra_group', groupId);
+      if (groupId) {
+        localStorage.setItem('porra_group', groupId);
+        // Nombre conocido para lonjas — siempre actualizar por si había valor antiguo
+        if (groupId === 'lonjas') {
+          localStorage.setItem('porra_group_name_lonjas', 'Lonjas');
+          setGroupName('Lonjas');
+        } else if (!localStorage.getItem(`porra_group_name_${groupId}`)) {
+          localStorage.setItem(`porra_group_name_${groupId}`, groupId);
+          setGroupName(groupId);
+        }
+      }
       const unsub = s.subscribe(({ config: c, players: p, reactions: r }) => {
         setConfig(normalizeConfig(c));
         setPlayers(p);
@@ -198,7 +216,7 @@ export default function PorraApp({ groupId = null }) {
 
   // Detectar nuevas reacciones dirigidas a mí
   useEffect(() => {
-    const meId = localStorage.getItem('porra_me');
+    const meId = localStorage.getItem(meKey);
     if (!meId || !reactions) return;
     const myReactions = Object.values(reactions).filter(r => r.to === meId);
     const newest = myReactions.reduce((max, r) => Math.max(max, r.at || 0), 0);
@@ -219,7 +237,7 @@ export default function PorraApp({ groupId = null }) {
 
   // Restore me from localStorage + re-subscribe push on every load
   useEffect(() => {
-    const savedId = localStorage.getItem('porra_me');
+    const savedId = localStorage.getItem(meKey);
     if (savedId) {
       setPlayers(prev => {
         if (prev[savedId]) setMe({ id: savedId, ...prev[savedId] });
@@ -238,12 +256,12 @@ export default function PorraApp({ groupId = null }) {
     if (existing) {
       if (existing.pin && existing.pin !== pin) return 'PIN incorrecto para ese nombre';
       setMe({ id, ...existing });
-      localStorage.setItem('porra_me', id);
+      localStorage.setItem(meKey, id);
     } else {
       const player = { id, name, pin, scores: {}, groupPicks: {}, tournament: {} };
       setMe(player);
       store.savePlayer(id, { name, pin, scores: {}, groupPicks: {}, tournament: {} });
-      localStorage.setItem('porra_me', id);
+      localStorage.setItem(meKey, id);
     }
     // Mostrar onboarding si es nuevo jugador o nunca lo ha visto
     const seen = localStorage.getItem('porra_onboarding_done');
@@ -316,11 +334,15 @@ export default function PorraApp({ groupId = null }) {
           <h1>Porra Mundial <span>2026</span></h1>
         </div>
         <div className={styles.who}>
-          <span className={styles.whoName}>{me.name}</span>
+          <div className={styles.whoInfo}>
+            <span className={styles.whoName}>{me.name}</span>
+            {groupId && groupName && (
+              <span className={styles.whoGroup}>{groupName}</span>
+            )}
+          </div>
           {groupId && (
             <button className={styles.infoBtn} onClick={() => {
               localStorage.removeItem('porra_group');
-              localStorage.removeItem('porra_me');
               window.location.href = '/';
             }} title="Cambiar grupo" aria-label="Cambiar grupo" style={{ marginRight: 4 }}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 1H13V5M13 1L7 7M6 2H2C1.45 2 1 2.45 1 3V12C1 12.55 1.45 13 2 13H11C11.55 13 12 12.55 12 12V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
