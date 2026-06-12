@@ -17,6 +17,7 @@ export default function AdminTab({ config, onSaveConfig }) {
   const [trn,      setTrn]      = useState({ semis: [], ...(config.tournament || {}) });
   const [toast,    setToast]    = useState('');
   const [section,  setSection]  = useState('results');
+  const [syncing,  setSyncing]  = useState(false);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2200); };
 
@@ -46,8 +47,6 @@ export default function AdminTab({ config, onSaveConfig }) {
     await onSaveConfig({ ...config, points, locked, results: clean, tournament: trn });
     showToast('Guardado ✓');
   };
-
-  const [syncing, setSyncing] = useState(false);
 
   const handleSync = async () => {
     setSyncing(true);
