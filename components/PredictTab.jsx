@@ -6,7 +6,7 @@ import {
   knockoutMatchPoints, isKnockoutLocked, getKnockoutCountdown,
 } from '@/lib/scoring';
 import { playerStats } from '@/lib/stats';
-import { getEarnedAchievements } from '@/lib/achievements';
+import { getEarnedAchievements, ACHIEVEMENTS } from '@/lib/achievements';
 import TeamFlag from './TeamFlag';
 import Countdown from './Countdown';
 import styles from './Tabs.module.css';
@@ -28,6 +28,7 @@ export default function PredictTab({ me, config, onSave }) {
   const hasKnockout = (config.knockoutMatches || []).length > 0;
 
   const [phase, setPhase]         = useState('scores');
+  const [showAllAchievements, setShowAllAchievements] = useState(false);
   const [scores, setScores]       = useState({ ...me.scores });
   const [knockoutScores, setKnockoutScores] = useState({ ...(me.knockoutScores || {}) });
   const [tournament, setTournament] = useState({ semis: [], ...(me.tournament || {}) });
@@ -82,10 +83,17 @@ export default function PredictTab({ me, config, onSave }) {
 
   return (
     <div className={styles.tabWrap}>
-      {/* ── Logros — visible solo cuando tienes al menos 1 ── */}
-      {earned.length > 0 && (
-        <div className={pred.achievementsWrap}>
-          <div className={pred.achievementsTitle}>Tus logros</div>
+      {/* ── Logros ── */}
+      <div className={pred.achievementsWrap}>
+        <div className={pred.achievementsHeader}>
+          <div className={pred.achievementsTitle}>
+            Logros {earned.length > 0 && <span className={pred.achievementsBadge}>{earned.length}/{ACHIEVEMENTS.length}</span>}
+          </div>
+          <button className={pred.achievementsToggle} onClick={() => setShowAllAchievements(v => !v)}>
+            {showAllAchievements ? 'Ocultar' : 'Ver todos'} {showAllAchievements ? '▲' : '▼'}
+          </button>
+        </div>
+        {earned.length > 0 && (
           <div className={pred.achievementsGrid}>
             {earned.map(a => (
               <div key={a.id} className={pred.achievementChip} title={a.desc}>
@@ -94,8 +102,28 @@ export default function PredictTab({ me, config, onSave }) {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+        {earned.length === 0 && !showAllAchievements && (
+          <div className={pred.achievementsEmpty}>Completa partidos para desbloquear logros</div>
+        )}
+        {showAllAchievements && (
+          <div className={pred.achievementsAll}>
+            {ACHIEVEMENTS.map(a => {
+              const isEarned = earned.some(e => e.id === a.id);
+              return (
+                <div key={a.id} className={`${pred.achievementRow} ${isEarned ? pred.achievementRowEarned : pred.achievementRowLocked}`}>
+                  <span className={pred.achievementRowIcon}>{isEarned ? a.icon : '🔒'}</span>
+                  <div className={pred.achievementRowInfo}>
+                    <span className={pred.achievementRowLabel}>{a.label}</span>
+                    <span className={pred.achievementRowDesc}>{a.desc}</span>
+                  </div>
+                  {isEarned && <span className={pred.achievementRowCheck}>✓</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       <div className={styles.seg}>
         <button className={phase === 'scores'  ? styles.segActive : ''} onClick={() => setPhase('scores')}>Grupos</button>

@@ -95,13 +95,98 @@
   padding: 12px 14px;
   margin-bottom: 14px;
 }
+.achievementsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
 .achievementsTitle {
   font-size: 10px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--accent);
-  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.achievementsBadge {
+  background: var(--accent);
+  color: #000;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+.achievementsToggle {
+  font-family: var(--font-barlow);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: none;
+  border: 1px solid rgba(234,88,11,.35);
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.achievementsEmpty {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.achievementsAll {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid rgba(234,88,11,.15);
+  padding-top: 10px;
+}
+.achievementRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+}
+.achievementRowEarned {
+  background: rgba(234,88,11,.1);
+  border: 1px solid rgba(234,88,11,.3);
+}
+.achievementRowLocked {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  opacity: 0.5;
+}
+.achievementRowIcon {
+  font-size: 20px;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.achievementRowInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.achievementRowLabel {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+.achievementRowDesc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.achievementRowCheck {
+  font-size: 13px;
+  color: #4ade80;
+  font-weight: 900;
+  flex-shrink: 0;
 }
 .achievementsGrid {
   display: flex;
