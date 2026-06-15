@@ -12,6 +12,19 @@ import ScorePopup from './ScorePopup';
 import OnboardingModal from './OnboardingModal';
 import styles from './PorraApp.module.css';
 
+const SPAIN_MATCH_DATES = ['2026-06-15', '2026-06-21', '2026-06-27'];
+const SPAIN_MATCH_INFO  = {
+  '2026-06-15': { rival: 'Cabo Verde',     hora: '21:00' },
+  '2026-06-21': { rival: 'Arabia Saudita', hora: '18:00' },
+  '2026-06-27': { rival: 'Uruguay',        hora: '21:00' },
+};
+
+function getSpainToday() {
+  const spainMs   = Date.now() + 2 * 60 * 60 * 1000; // UTC+2 CEST
+  const spainDate = new Date(spainMs).toISOString().slice(0, 10);
+  return SPAIN_MATCH_DATES.includes(spainDate) ? SPAIN_MATCH_INFO[spainDate] : null;
+}
+
 const VAPID_PUBLIC = 'BCtEG7SpkyP_evxcDd4cErkyoJcXscRJeoRUc4XiqogdCWKHoeJ_mzrDia5repb75qRc__dcyW4K5ZRjYoyqU5g';
 
 async function subscribePush(playerId) {
@@ -64,6 +77,7 @@ export default function PorraApp({ groupId = null }) {
   const [showScore, setShowScore]     = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [reactionNote, setReactionNote] = useState('');
+  const spainToday = getSpainToday();
   const [groupName, setGroupName] = useState('');
   const lastSeenRef    = useRef(0);
   const reminderTimers = useRef([]);
@@ -327,7 +341,16 @@ export default function PorraApp({ groupId = null }) {
   ).length;
 
   return (
-    <div className={styles.root}>
+    <div className={`${styles.root} ${spainToday ? styles.spainDay : ''}`}>
+      {spainToday && (
+        <div className={styles.spainBanner}>
+          <span className={styles.spainFlag}>🇪🇸</span>
+          <span className={styles.spainText}>
+            HOY JUEGA ESPAÑA · <strong>vs {spainToday.rival}</strong> · {spainToday.hora}h · Cancela lo que tengas
+          </span>
+          <span className={styles.spainFlag}>🇪🇸</span>
+        </div>
+      )}
       <header className={styles.header}>
         <div className={styles.brand}>
           <img src="/icons/logo.svg" alt="Logo" className={styles.logoImg} />
