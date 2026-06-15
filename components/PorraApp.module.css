@@ -96,7 +96,7 @@
 }
 .spainFlag { font-size: 20px; }
 .spainText { text-align: center; line-height: 1.3; }
-.spainText strong { color: #F1BF00; }
+.spainText strong { color: #fff; text-shadow: 0 0 8px rgba(0,0,0,0.6); }
 
 @keyframes spainPulse {
   0%, 100% { opacity: 1; }
