@@ -384,11 +384,12 @@ export default function PorraApp({ groupId = null }) {
       {reactionNote && <div className={`${styles.banner} ${styles.reaction}`}>{reactionNote}</div>}
 
       <main className={styles.main}>
-        {tab === 'predict' && <PredictTab me={meWithLatest} config={config} onSave={savePlayer} />}
-        {tab === 'ranking' && <RankingTab players={players} me={me} config={config} />}
-        {tab === 'bets'    && <BetsTab players={players} me={me} config={config} reactions={reactions} onReact={handleReact} />}
-        {tab === 'matches' && <MatchesTab config={config} players={players} me={meWithLatest} />}
-        {tab === 'admin'   && <AdminTab config={config} onSaveConfig={saveConfig} />}
+        {/* Tabs siempre montados — display:none en vez de desmontar, para no perder estado en iOS */}
+        <div style={{ display: tab === 'predict' ? 'block' : 'none' }}><PredictTab me={meWithLatest} config={config} onSave={savePlayer} /></div>
+        <div style={{ display: tab === 'ranking' ? 'block' : 'none' }}><RankingTab players={players} me={me} config={config} /></div>
+        <div style={{ display: tab === 'bets'    ? 'block' : 'none' }}><BetsTab players={players} me={me} config={config} reactions={reactions} onReact={handleReact} /></div>
+        <div style={{ display: tab === 'matches' ? 'block' : 'none' }}><MatchesTab config={config} players={players} me={meWithLatest} /></div>
+        {tab === 'admin' && <AdminTab config={config} onSaveConfig={saveConfig} />}
       </main>
 
       <nav className={styles.tabbar}>
