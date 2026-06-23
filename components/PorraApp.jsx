@@ -77,6 +77,7 @@ export default function PorraApp({ groupId = null }) {
   const [showScore, setShowScore]     = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [reactionNote, setReactionNote] = useState('');
+  const [storeReady, setStoreReady]   = useState(false);
   const spainToday = getSpainToday();
   const [groupName, setGroupName] = useState('');
   const lastSeenRef    = useRef(0);
@@ -219,10 +220,12 @@ export default function PorraApp({ groupId = null }) {
           setGroupName(groupId);
         }
       }
+      let firstSnap = false;
       const unsub = s.subscribe(({ config: c, players: p, reactions: r }) => {
         setConfig(normalizeConfig(c));
         setPlayers(p);
         setReactions(r || {});
+        if (!firstSnap) { firstSnap = true; setStoreReady(true); }
       });
       return unsub;
     });
@@ -328,7 +331,7 @@ export default function PorraApp({ groupId = null }) {
   }, [store, me, reactions]);
 
   if (!me) {
-    return <Welcome players={players} onEnter={enter} loading={!store} />;
+    return <Welcome players={players} onEnter={enter} loading={!store || !storeReady} />;
   }
 
   const meWithLatest = players[me.id]
