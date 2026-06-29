@@ -54,10 +54,11 @@ const OUR_MATCHES = [
 ];
 
 const KNOCKOUT_STAGES = [
-  { stage:'LAST_16',        code:'r16',  mult:1, label:'Dieciseisavos' },
-  { stage:'QUARTER_FINALS', code:'qf',   mult:2, label:'Cuartos de Final' },
-  { stage:'SEMI_FINALS',    code:'sf',   mult:3, label:'Semifinales' },
-  { stage:'FINAL',          code:'fin',  mult:4, label:'Final' },
+  { stage:'LAST_32',        code:'r32',  mult:1, label:'Dieciseisavos' },   // 2026: 48→32 teams
+  { stage:'LAST_16',        code:'r16',  mult:2, label:'Octavos de Final' },
+  { stage:'QUARTER_FINALS', code:'qf',   mult:3, label:'Cuartos de Final' },
+  { stage:'SEMI_FINALS',    code:'sf',   mult:4, label:'Semifinales' },
+  { stage:'FINAL',          code:'fin',  mult:5, label:'Final' },
 ];
 
 // ── Firestore helpers ────────────────────────────────────────────
