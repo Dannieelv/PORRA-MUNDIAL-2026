@@ -5,6 +5,7 @@ const SPAIN_MATCHES = [
   { date: '2026-06-15', rival: 'Cabo Verde',     hora: '21:00' },
   { date: '2026-06-21', rival: 'Arabia Saudita', hora: '18:00' },
   { date: '2026-06-27', rival: 'Uruguay',        hora: '21:00' },
+  { date: '2026-07-02', rival: 'Austria',        hora: '19:00' }, // Dieciseisavos — 17:00 UTC = 19:00 CEST
 ];
 
 const MESSAGES = [

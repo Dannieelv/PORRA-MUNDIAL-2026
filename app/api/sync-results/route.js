@@ -99,8 +99,9 @@ async function getFirestoreConfig() {
     for (const [k, v] of Object.entries(f.knockoutResults?.mapValue?.fields || {})) {
       const inner = v?.mapValue?.fields || {};
       knockoutResults[k] = {
-        h: inner.h?.integerValue ?? inner.h?.stringValue ?? '',
-        a: inner.a?.integerValue ?? inner.a?.stringValue ?? '',
+        h:      inner.h?.integerValue ?? inner.h?.stringValue ?? '',
+        a:      inner.a?.integerValue ?? inner.a?.stringValue ?? '',
+        winner: inner.winner?.stringValue ?? null,
       };
     }
 
@@ -156,17 +157,19 @@ async function saveKnockoutMatches(matches) {
   });
 }
 
-async function saveKnockoutResult(matchId, h, a) {
+async function saveKnockoutResult(matchId, h, a, winner) {
+  const resultFields = {
+    h: { integerValue: String(h) },
+    a: { integerValue: String(a) },
+  };
+  if (winner) resultFields.winner = { stringValue: winner };
   await fetch(`${FIRESTORE_URL}/porra/config?key=${FIREBASE_API_KEY}&updateMask.fieldPaths=knockoutResults.${matchId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       fields: {
         knockoutResults: { mapValue: { fields: {
-          [matchId]: { mapValue: { fields: {
-            h: { integerValue: String(h) },
-            a: { integerValue: String(a) },
-          }}}
+          [matchId]: { mapValue: { fields: resultFields }}
         }}}
       }
     }),
@@ -238,23 +241,22 @@ async function propagateKnockoutMatchesToGroups(groupIds, matches) {
   }
 }
 
-async function propagateKnockoutResultToGroups(groupIds, matchId, h, a) {
+async function propagateKnockoutResultToGroups(groupIds, matchId, h, a, winner) {
+  const resultFields = {
+    h: { integerValue: String(h) },
+    a: { integerValue: String(a) },
+  };
+  if (winner) resultFields.winner = { stringValue: winner };
+  const body = JSON.stringify({
+    fields: {
+      knockoutResults: { mapValue: { fields: {
+        [matchId]: { mapValue: { fields: resultFields }}
+      }}}
+    }
+  });
   for (const gId of groupIds) {
     const url = `${FIRESTORE_URL}/groups/${gId}/settings/config?key=${FIREBASE_API_KEY}&updateMask.fieldPaths=knockoutResults.${matchId}`;
-    await fetch(url, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        fields: {
-          knockoutResults: { mapValue: { fields: {
-            [matchId]: { mapValue: { fields: {
-              h: { integerValue: String(h) },
-              a: { integerValue: String(a) },
-            }}}
-          }}}
-        }
-      }),
-    }).catch(() => {});
+    await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body }).catch(() => {});
   }
 }
 
@@ -375,13 +377,14 @@ export async function GET() {
 
         // Save result if finished
         if (apiMatch.status === 'FINISHED') {
-          const h = apiMatch.score?.fullTime?.home;
-          const a = apiMatch.score?.fullTime?.away;
+          const h      = apiMatch.score?.fullTime?.home;
+          const a      = apiMatch.score?.fullTime?.away;
+          const winner = apiMatch.score?.winner || null; // HOME_TEAM / AWAY_TEAM
           if (h === null || a === null) continue;
           const existingResult = currentKOResults[matchId];
           if (!existingResult || String(existingResult.h) !== String(h) || String(existingResult.a) !== String(a)) {
-            await saveKnockoutResult(matchId, h, a);
-            await propagateKnockoutResultToGroups(allGroupIds, matchId, h, a);
+            await saveKnockoutResult(matchId, h, a, winner);
+            await propagateKnockoutResultToGroups(allGroupIds, matchId, h, a, winner);
             await notifyAll({
               title: `${label}: ${t1} ${h}-${a} ${t2}`,
               body: 'Comprueba tus puntos en la Porra Mundial 2026',

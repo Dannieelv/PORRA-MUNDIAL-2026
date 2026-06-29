@@ -12,17 +12,34 @@ import ScorePopup from './ScorePopup';
 import OnboardingModal from './OnboardingModal';
 import styles from './PorraApp.module.css';
 
-const SPAIN_MATCH_DATES = ['2026-06-15', '2026-06-21', '2026-06-27'];
 const SPAIN_MATCH_INFO  = {
   '2026-06-15': { rival: 'Cabo Verde',     hora: '21:00' },
   '2026-06-21': { rival: 'Arabia Saudita', hora: '18:00' },
   '2026-06-27': { rival: 'Uruguay',        hora: '21:00' },
 };
 
-function getSpainToday() {
+// Convierte datetime UTC a hora CEST (UTC+2) como string "HH:MM"
+function utcToSpainHora(datetimeUTC) {
+  const d = new Date(new Date(datetimeUTC).getTime() + 2 * 3600 * 1000);
+  return d.toISOString().slice(11, 16);
+}
+
+function getSpainToday(knockoutMatches = []) {
   const spainMs   = Date.now() + 2 * 60 * 60 * 1000; // UTC+2 CEST
   const spainDate = new Date(spainMs).toISOString().slice(0, 10);
-  return SPAIN_MATCH_DATES.includes(spainDate) ? SPAIN_MATCH_INFO[spainDate] : null;
+  // Primero: fases de grupos (hardcoded)
+  if (SPAIN_MATCH_INFO[spainDate]) return SPAIN_MATCH_INFO[spainDate];
+  // Segundo: eliminatorias — detecta dinámicamente si España juega hoy
+  for (const m of knockoutMatches) {
+    if (!m.datetime) continue;
+    const matchDate = m.datetime.slice(0, 10);
+    if (matchDate !== spainDate) continue;
+    const isSpain = m.t1 === 'España' || m.t2 === 'España';
+    if (!isSpain) continue;
+    const rival = m.t1 === 'España' ? m.t2 : m.t1;
+    return { rival, hora: utcToSpainHora(m.datetime) };
+  }
+  return null;
 }
 
 const VAPID_PUBLIC = 'BCtEG7SpkyP_evxcDd4cErkyoJcXscRJeoRUc4XiqogdCWKHoeJ_mzrDia5repb75qRc__dcyW4K5ZRjYoyqU5g';
@@ -78,7 +95,7 @@ export default function PorraApp({ groupId = null }) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [reactionNote, setReactionNote] = useState('');
   const [storeReady, setStoreReady]   = useState(false);
-  const spainToday = getSpainToday();
+  const spainToday = getSpainToday(config.knockoutMatches || []);
   const [groupName, setGroupName] = useState('');
   const lastSeenRef    = useRef(0);
   const reminderTimers = useRef([]);
