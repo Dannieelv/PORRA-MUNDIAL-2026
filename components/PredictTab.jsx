@@ -16,13 +16,14 @@ const ALL_TEAMS   = [...TEAMS].sort((a, b) => a.name.localeCompare(b.name, 'es')
 const SEMIS_COUNT = 4;
 
 const STAGE_LABELS = {
-  LAST_16:        'Dieciseisavos de Final',
+  LAST_32:        'Dieciseisavos de Final',
+  LAST_16:        'Octavos de Final',
   QUARTER_FINALS: 'Cuartos de Final',
   SEMI_FINALS:    'Semifinales',
   FINAL:          'Final',
 };
 
-const STAGE_ORDER = ['LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'FINAL'];
+const STAGE_ORDER = ['LAST_32', 'LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS', 'FINAL'];
 
 export default function PredictTab({ me, config, onSave }) {
   const hasKnockout = (config.knockoutMatches || []).length > 0;
@@ -366,7 +367,7 @@ function TournamentDeadlineBanner({ config }) {
   }
 
   // Buscar el último partido de dieciseisavos para calcular el cierre
-  const r16 = (config.knockoutMatches || []).filter(m => m.stage === 'LAST_16');
+  const r16 = (config.knockoutMatches || []).filter(m => m.stage === 'LAST_32' || m.stage === 'LAST_16');
 
   if (r16.length === 0) {
     // Los 1/8 aún no están definidos
