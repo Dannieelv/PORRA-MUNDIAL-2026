@@ -361,18 +361,28 @@ export async function GET() {
         const date     = apiMatch.utcDate?.slice(0, 10) || '';
         const datetime = apiMatch.utcDate || '';
 
-        // Save fixture if new
-        const exists = knockoutMatchesCopy.find(m => m.id === matchId);
-        if (!exists) {
+        // Si ya existe un fixture para los mismos equipos en la misma ronda (ej. pre-cargado
+        // manualmente), reutilizamos su ID para que los resultados casen con las apuestas.
+        const existsByTeams = knockoutMatchesCopy.find(
+          m => m.stage === stage && m.t1 === t1 && m.t2 === t2
+        );
+        const existsById = knockoutMatchesCopy.find(m => m.id === matchId);
+        const effectiveId = existsByTeams ? existsByTeams.id : matchId;
+
+        if (!existsByTeams && !existsById) {
           knockoutMatchesCopy.push({ id: matchId, stage, mult, t1, t2, date, datetime });
           fixturesChanged = true;
           summary.knockoutFixturesAdded.push(`${label}: ${t1} vs ${t2}`);
-          // Notify: round open for betting (24h window)
           await notifyAll({
             title: `Cruces de ${label} disponibles`,
             body: `Apuesta antes de 24h: ${t1} vs ${t2} y más`,
             tag: `fixture_open_${matchId}`, url: '/',
           });
+        } else if (existsByTeams && existsByTeams.datetime !== datetime) {
+          // Actualiza el datetime del fixture existente si la API tiene el horario real
+          existsByTeams.datetime = datetime;
+          existsByTeams.date     = date;
+          fixturesChanged = true;
         }
 
         // Save result if finished
@@ -408,13 +418,13 @@ export async function GET() {
           }
           const winner = apiMatch.score?.winner || null; // HOME_TEAM / AWAY_TEAM
           if (h === null || h === undefined || a === null || a === undefined) continue;
-          const existingResult = currentKOResults[matchId];
+          const existingResult = currentKOResults[effectiveId];
           if (!existingResult
               || String(existingResult.h) !== String(h)
               || String(existingResult.a) !== String(a)
               || existingResult.winner !== winner) {
-            await saveKnockoutResult(matchId, h, a, winner);
-            await propagateKnockoutResultToGroups(allGroupIds, matchId, h, a, winner);
+            await saveKnockoutResult(effectiveId, h, a, winner);
+            await propagateKnockoutResultToGroups(allGroupIds, effectiveId, h, a, winner);
             await notifyAll({
               title: `${label}: ${t1} ${h}-${a} ${t2}`,
               body: 'Comprueba tus puntos en la Porra Mundial 2026',
