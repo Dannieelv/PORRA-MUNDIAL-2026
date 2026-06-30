@@ -377,12 +377,42 @@ export async function GET() {
 
         // Save result if finished
         if (apiMatch.status === 'FINISHED') {
-          const h      = apiMatch.score?.fullTime?.home;
-          const a      = apiMatch.score?.fullTime?.away;
+          const duration = apiMatch.score?.duration; // REGULAR | EXTRA_TIME | PENALTY_SHOOTOUT
+          let h, a;
+          if (duration === 'PENALTY_SHOOTOUT') {
+            // fullTime puede incluir los penaltis — usamos halfTime como base
+            // y reconstruimos el marcador de 90min (halfTime × 2 es una aproximación,
+            // pero football-data.org no expone regularTime en v4).
+            // La única fuente fiable de "goles en campo" es extraTime si existe,
+            // que sería el score al final de la prórroga (pero sin los penaltis).
+            // Si hay extraTime disponible lo usamos; si no, usamos halfTime para
+            // guardar al menos el marcador de descanso. En ambos casos winner es lo clave.
+            const et = apiMatch.score?.extraTime;
+            if (et && et.home !== null && et.away !== null) {
+              h = et.home; a = et.away; // score al final de la prórroga (sin penaltis)
+            } else {
+              // Fallback: solo tenemos halfTime — usamos 0-0 como marcador
+              // (lo importante es winner para calcular puntos)
+              h = apiMatch.score?.halfTime?.home ?? 0;
+              a = apiMatch.score?.halfTime?.away ?? 0;
+            }
+          } else if (duration === 'EXTRA_TIME') {
+            // fullTime incluye los goles de la prórroga — eso está bien,
+            // el usuario apuesta el "resultado final" en campo
+            h = apiMatch.score?.fullTime?.home;
+            a = apiMatch.score?.fullTime?.away;
+          } else {
+            // REGULAR: fullTime son exactamente los 90min
+            h = apiMatch.score?.fullTime?.home;
+            a = apiMatch.score?.fullTime?.away;
+          }
           const winner = apiMatch.score?.winner || null; // HOME_TEAM / AWAY_TEAM
-          if (h === null || a === null) continue;
+          if (h === null || h === undefined || a === null || a === undefined) continue;
           const existingResult = currentKOResults[matchId];
-          if (!existingResult || String(existingResult.h) !== String(h) || String(existingResult.a) !== String(a)) {
+          if (!existingResult
+              || String(existingResult.h) !== String(h)
+              || String(existingResult.a) !== String(a)
+              || existingResult.winner !== winner) {
             await saveKnockoutResult(matchId, h, a, winner);
             await propagateKnockoutResultToGroups(allGroupIds, matchId, h, a, winner);
             await notifyAll({
