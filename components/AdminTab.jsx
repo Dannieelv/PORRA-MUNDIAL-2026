@@ -18,6 +18,14 @@ export default function AdminTab({ config, onSaveConfig }) {
   const [toast,    setToast]    = useState('');
   const [section,  setSection]  = useState('results');
   const [syncing,  setSyncing]  = useState(false);
+  const [koResults, setKoResults] = useState(() => {
+    const out = {};
+    (config.knockoutResults || {}) && Object.entries(config.knockoutResults || {}).forEach(([id, r]) => {
+      out[id] = { h: r.h ?? '', a: r.a ?? '', winner: r.winner || '' };
+    });
+    return out;
+  });
+  const [koSaving, setKoSaving] = useState({});
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2200); };
 
@@ -109,7 +117,8 @@ export default function AdminTab({ config, onSaveConfig }) {
       </button>
 
       <div className={styles.seg}>
-        <button className={section === 'results' ? styles.segActive : ''} onClick={() => setSection('results')}>Resultados</button>
+        <button className={section === 'results' ? styles.segActive : ''} onClick={() => setSection('results')}>Grupos</button>
+        <button className={section === 'ko'      ? styles.segActive : ''} onClick={() => setSection('ko')}>Eliminatorias</button>
         <button className={section === 'torneo'  ? styles.segActive : ''} onClick={() => setSection('torneo')}>🌍 Torneo</button>
         <button className={section === 'config'  ? styles.segActive : ''} onClick={() => setSection('config')}>Ajustes</button>
       </div>
@@ -144,6 +153,77 @@ export default function AdminTab({ config, onSaveConfig }) {
             </div>
           ))}
           <button className={styles.btn} style={{ marginTop: 14 }} onClick={saveAll}>Guardar resultados</button>
+        </div>
+      )}
+
+      {/* ── Eliminatorias ── */}
+      {section === 'ko' && (
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>Resultados eliminatorias</h2>
+          <p className={styles.hint}>Marcador a 90 min + quién clasifica (para penaltis).</p>
+          {(config.knockoutMatches || []).length === 0 && (
+            <p className={styles.hint}>Aún no hay partidos de eliminatorias.</p>
+          )}
+          {(config.knockoutMatches || []).map(m => {
+            const r = koResults[m.id] || { h: '', a: '', winner: '' };
+            const saving = koSaving[m.id];
+            const setKoField = (field, val) =>
+              setKoResults(prev => ({ ...prev, [m.id]: { ...(prev[m.id] || { h: '', a: '', winner: '' }), [field]: val } }));
+            const saveKo = async () => {
+              setKoSaving(prev => ({ ...prev, [m.id]: true }));
+              try {
+                const res = await fetch('/api/admin-ko-result', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ matchId: m.id, h: r.h, a: r.a, winner: r.winner || null }),
+                });
+                const data = await res.json();
+                showToast(data.ok ? `${m.t1} ${r.h}-${r.a} ${m.t2} guardado ✓` : 'Error: ' + data.error);
+              } catch { showToast('Error al guardar'); }
+              setKoSaving(prev => ({ ...prev, [m.id]: false }));
+            };
+            return (
+              <div key={m.id} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: '1px solid #f0eaf8' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#9b8ab8', marginBottom: 4, textTransform: 'uppercase' }}>
+                  {m.stage} · {m.date}
+                </div>
+                <div className={styles.match}>
+                  <div className={styles.team}><TeamFlag name={m.t1} size={20} /><span className={styles.teamName}>{m.t1}</span></div>
+                  <div className={styles.scoreIn}>
+                    <input type="number" min="0" inputMode="numeric" value={r.h}
+                      onChange={e => setKoField('h', e.target.value)} />
+                    <span className={styles.vs}>-</span>
+                    <input type="number" min="0" inputMode="numeric" value={r.a}
+                      onChange={e => setKoField('a', e.target.value)} />
+                  </div>
+                  <div className={`${styles.team} ${styles.away}`}><span className={styles.teamName}>{m.t2}</span><TeamFlag name={m.t2} size={20} /></div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                  <span style={{ fontSize: 12, color: '#7C61D4', fontWeight: 700 }}>Clasificado:</span>
+                  {[
+                    { val: '', label: '— Sin resultado —' },
+                    { val: 'HOME_TEAM', label: m.t1 },
+                    { val: 'AWAY_TEAM', label: m.t2 },
+                  ].map(opt => (
+                    <button key={opt.val} onClick={() => setKoField('winner', opt.val)}
+                      style={{
+                        padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                        fontFamily: 'inherit', cursor: 'pointer',
+                        background: r.winner === opt.val ? '#7C61D4' : '#f4f1fb',
+                        color: r.winner === opt.val ? '#fff' : '#2d2540',
+                        border: `2px solid ${r.winner === opt.val ? '#7C61D4' : '#e7e1f4'}`,
+                      }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <button className={styles.btn} style={{ marginTop: 8, padding: '6px 14px', fontSize: 13 }}
+                  onClick={saveKo} disabled={saving}>
+                  {saving ? 'Guardando…' : 'Guardar'}
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 
